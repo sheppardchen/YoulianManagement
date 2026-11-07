@@ -572,11 +572,11 @@
     <!-- 逻辑处理脚本 -->
     <script>
         const RAW_SUPABASE_URL = "https://bmihjttxiqlzypdvxrdo.supabase.co";
-        const RAW_SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJtaWhqdHR4aXFsenlwZHZ4cmRvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM0MTE5MzQsImV4cCI6MjEwODk4NzkzNH0.nx-XTeYs--D04QgfsX5rkMUEmBRUr_YK8-MU9-QGr6w"; 
+        const RAW_SUPABASE_KEY = "__SUPABASE_KEY_PLACEHOLDER__"; 
 
         function sanitizeHeaderString(str) {
             if (!str) return '';
-            return String(str).replace(/[^\x00-\x7F]/g, "").trim();
+            return String(str).replace(/[^ -]/g, "").trim();
         }
 
         const SUPABASE_URL = sanitizeHeaderString(RAW_SUPABASE_URL);
@@ -2123,7 +2123,8 @@
             }
 
             if (res.error) {
-                alert("提交失败！错误信息:\n" + res.error.message);
+                alert("提交失败！错误信息:
+" + res.error.message);
                 return;
             }
 
@@ -2408,8 +2409,10 @@
                 return;
             }
 
-            let csvContent = `\uFEFF${selectedMonth} 客户订单多型号、毛利与环比分析月度报表 ($)\n`;
-            csvContent += "订单号,客户名称,下单日期,预计发货时间,总数量,已发货总数,总金额($),总成本($),毛利润($),发货批次详情\n";
+            let csvContent = `﻿${selectedMonth} 客户订单多型号、毛利与环比分析月度报表 ($)
+`;
+            csvContent += "订单号,客户名称,下单日期,预计发货时间,总数量,已发货总数,总金额($),总成本($),毛利润($),发货批次详情
+";
 
             monthOrders.forEach(o => {
                 const models = parseModels(o);
@@ -2424,7 +2427,8 @@
                     const itemsText = items.map(i => `${i.model}:${i.qty}${i.unit || '个'}`).join('+');
                     return `[${itemsText}(${b.date})]`;
                 }).join(' ');
-                csvContent += `"${o.order_no || ''}","${o.customer}","${o.order_date}","${o.due_date || 'Not set'}",${totalQ},${shippedQ},${Number(o.total_amount || 0).toFixed(2)},${cost.toFixed(2)},${profit.toFixed(2)},"${hStr}"\n`;
+                csvContent += `"${o.order_no || ''}","${o.customer}","${o.order_date}","${o.due_date || 'Not set'}",${totalQ},${shippedQ},${Number(o.total_amount || 0).toFixed(2)},${cost.toFixed(2)},${profit.toFixed(2)},"${hStr}"
+`;
             });
 
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
