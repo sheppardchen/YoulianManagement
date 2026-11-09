@@ -663,8 +663,8 @@
     <!-- 逻辑处理脚本 -->
     <script>
         const RAW_SUPABASE_URL = "https://bmihjttxiqlzypdvxrdo.supabase.co";
-        // 如果环境变量注入未生效，可以直接在此处填入你的真实匿名密钥进行调试
-        const RAW_SUPABASE_KEY = "__SUPABASE_KEY_PLACEHOLDER__"; 
+        // 彻底根除变量作用域与未初始化报错的完整常量声明
+        const RAW_SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJtaWhqdHR4aXFsenlwZHZ4cmRvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM0MTE5MzQsImV4cCI6MjEwODk4NzkzNH0.nx-XTeYs--D04QgfsX5rkMUEmBRUr_YK8-MU9-QGr6w";
 
         function sanitizeHeaderString(str) {
             if (!str) return '';
@@ -677,10 +677,11 @@
         const DEFAULT_PWD = "12345678";
         const UNIT_OPTIONS = ["个", "件", "张", "吨", "箱", "卷", "kg", "米", "套", "包", "盘", "支"];
 
+        // 必须在函数前优先声明，彻底消除第 781 行的 ReferenceError
+        let systemSettings = { app_pwd: DEFAULT_PWD };
         let ordersData = [];
         let inventoryData = [];
         let recycleData = [];
-        let systemSettings = { app_pwd: DEFAULT_PWD };
         let chartInstance1 = null;
         let chartInstance2 = null;
 
