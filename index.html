@@ -117,6 +117,27 @@
         </div>
     </div>
 
+    <!-- 弹窗：邮箱找回密码 -->
+    <div id="modal-email-reset" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm hidden flex items-center justify-center z-[110] p-4">
+        <div class="bg-white p-6 rounded-2xl shadow-2xl max-w-sm w-full space-y-4 border border-slate-100">
+            <div class="flex justify-between items-center">
+                <h3 class="text-base font-bold text-slate-800 flex items-center gap-2"><i class="fa-regular fa-envelope text-indigo-600"></i> 邮箱找回密码</h3>
+                <button onclick="closeEmailResetModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form onsubmit="handleSendEmailReset(event)" class="space-y-3 text-xs">
+                <div>
+                    <label class="block font-medium mb-1 text-slate-700">预留关联邮箱 *</label>
+                    <input type="email" id="reset-email-input" required class="w-full border border-slate-300 p-3 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500" placeholder="例如：user@youlian.com">
+                </div>
+                <div id="email-reset-msg" class="text-xs hidden p-2.5 rounded-lg border"></div>
+                <div class="flex justify-end gap-2 pt-2">
+                    <button type="button" onclick="closeEmailResetModal()" class="px-4 py-2.5 border border-slate-300 text-slate-600 rounded-xl font-medium mobile-touch-target">关闭</button>
+                    <button type="submit" class="px-4 py-2.5 bg-indigo-600 text-white rounded-xl font-medium hover:bg-indigo-700 shadow-md mobile-touch-target">发送重置指令</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- 2. 主页面结构 -->
     <div id="main-app" class="hidden min-h-screen flex flex-col">
         <header class="bg-slate-900 text-white shadow-md sticky top-0 z-50">
@@ -576,7 +597,7 @@
 
         function sanitizeHeaderString(str) {
             if (!str) return '';
-            return String(str).replace(/[^ -]/g, "").trim();
+            return String(str).replace(/[^ -~]/g, "").trim();
         }
 
         const SUPABASE_URL = sanitizeHeaderString(RAW_SUPABASE_URL);
@@ -2123,8 +2144,7 @@
             }
 
             if (res.error) {
-                alert("提交失败！错误信息:
-" + res.error.message);
+                alert("提交失败！错误信息:\n" + res.error.message);
                 return;
             }
 
@@ -2409,10 +2429,8 @@
                 return;
             }
 
-            let csvContent = `﻿${selectedMonth} 客户订单多型号、毛利与环比分析月度报表 ($)
-`;
-            csvContent += "订单号,客户名称,下单日期,预计发货时间,总数量,已发货总数,总金额($),总成本($),毛利润($),发货批次详情
-";
+            let csvContent = `\uFEFF${selectedMonth} 客户订单多型号、毛利与环比分析月度报表 ($)\n`;
+            csvContent += "订单号,客户名称,下单日期,预计发货时间,总数量,已发货总数,总金额($),总成本($),毛利润($),发货批次详情\n";
 
             monthOrders.forEach(o => {
                 const models = parseModels(o);
@@ -2427,8 +2445,7 @@
                     const itemsText = items.map(i => `${i.model}:${i.qty}${i.unit || '个'}`).join('+');
                     return `[${itemsText}(${b.date})]`;
                 }).join(' ');
-                csvContent += `"${o.order_no || ''}","${o.customer}","${o.order_date}","${o.due_date || 'Not set'}",${totalQ},${shippedQ},${Number(o.total_amount || 0).toFixed(2)},${cost.toFixed(2)},${profit.toFixed(2)},"${hStr}"
-`;
+                csvContent += `"${o.order_no || ''}","${o.customer}","${o.order_date}","${o.due_date || 'Not set'}",${totalQ},${shippedQ},${Number(o.total_amount || 0).toFixed(2)},${cost.toFixed(2)},${profit.toFixed(2)},"${hStr}"\n`;
             });
 
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
