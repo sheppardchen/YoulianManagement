@@ -41,7 +41,6 @@
         <div class="bg-white p-6 sm:p-8 rounded-3xl shadow-2xl max-w-md w-full space-y-6 border border-slate-100">
             <div class="text-center space-y-2">
                 <div class="inline-flex p-3 rounded-2xl bg-indigo-50 text-indigo-600 mb-1 items-center justify-center">
-                    <!-- 替换为重整后高清流畅的品牌 SVG Logo -->
                     <svg class="w-12 h-12" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path d="M85 30 L160 105 L125 140 L85 100 L50 135 L15 100 Z" fill="#00529C"/>
                         <path d="M115 170 L40 95 L75 60 L115 100 L150 65 L185 100 Z" fill="#009933"/>
@@ -51,7 +50,6 @@
                 <p class="text-xs sm:text-sm text-slate-500">请输入安全系统密码以访问核心数据模块</p>
             </div>
 
-            <!-- 登录逾期/临期发货预警提示框 -->
             <div id="login-due-alert" class="hidden bg-amber-50 border border-amber-200 text-amber-800 p-3.5 rounded-xl text-xs space-y-1">
                 <div class="font-bold flex items-center gap-1.5 text-amber-900">
                     <i class="fa-solid fa-triangle-exclamation text-amber-600"></i> 近期订单发货预警
@@ -115,7 +113,6 @@
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex justify-between items-center">
                 <div class="flex items-center gap-3">
                     <div class="bg-white/10 p-1.5 rounded-xl flex items-center justify-center">
-                        <!-- 重新优化的标准系统顶部矢量 Logo -->
                         <svg class="w-8 h-8" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <path d="M85 30 L160 105 L125 140 L85 100 L50 135 L15 100 Z" fill="#00529C"/>
                             <path d="M115 170 L40 95 L75 60 L115 100 L150 65 L185 100 Z" fill="#009933"/>
@@ -666,7 +663,7 @@
     <!-- 逻辑处理脚本 -->
     <script>
         const RAW_SUPABASE_URL = "https://bmihjttxiqlzypdvxrdo.supabase.co";
-        // Cloudflare 构建替换占位符
+        // Cloudflare 构建替换占位符（已匹配构建环境变量配置）
         const RAW_SUPABASE_KEY = "__SUPABASE_KEY_PLACEHOLDER__"; 
 
         function sanitizeHeaderString(str) {
@@ -936,7 +933,6 @@
             const inv = await fetchSupabaseRest('inventory', 'select=*&order=id.asc');
             inventoryData = Array.isArray(inv) ? inv : [];
 
-            // 加载回收站数据
             const rec = await fetchSupabaseRest('recycled_items', 'select=*&order=id.desc');
             recycleData = Array.isArray(rec) ? rec : [];
 
@@ -947,7 +943,6 @@
             updateKPIs();
             initReportMonthSelector();
 
-            // 自动清理超期15天的数据
             autoClean15DaysRecycle();
         }
 
@@ -1297,7 +1292,7 @@
                 `;
             } else if (type === 'qty' || type === 'total_qty') {
                 const isCount = (type === 'qty');
-                modalTitle.innerText = isCount ? `[${selectedMonth}] 本月订单总数明细` : `[${selectedMonth}] 本月订单总量及款式明细`;
+                modalTitle.innerText = isCount ? `[${selectedMonth}] 本月订单总笔数明细` : `[${selectedMonth}] 本月订单总量及款式明细`;
                 let totalQtySum = 0;
                 let html = monthOrders.length === 0 ? `<div class="text-slate-400 py-4 text-center">本月暂无订单数据</div>` : monthOrders.map(o => {
                     const models = parseModels(o);
@@ -2687,13 +2682,11 @@
             closeOrderModal();
         }
 
-        /* 核心改进 1: 订单删除逻辑（移动至回收站，保留15天） */
         async function deleteOrder(id) {
             const o = ordersData.find(item => item.id === id);
             if (!o) return;
 
             if (confirm(`确定要把订单【${o.order_no} (${o.customer})】移入回收站吗？（将在回收站保留 15 天）`)) {
-                // 1. 存入回收站表
                 const recPayload = {
                     item_type: 'ORDER',
                     original_data: JSON.stringify(o),
@@ -2707,13 +2700,11 @@
                     return;
                 }
 
-                // 2. 从主数据表物理删除
                 await deleteSupabaseRest('orders', `id=eq.${id}`);
                 fetchDataFromCloud();
             }
         }
 
-        /* 核心改进 2: 原材料删除逻辑（移动至回收站，保留15天） */
         async function deleteInventory(id) {
             const i = inventoryData.find(item => item.id === id);
             if (!i) return;
@@ -2737,7 +2728,6 @@
             }
         }
 
-        /* 核心改进 3: 回收站列表渲染与计算 */
         function renderRecycleTable() {
             const tbody = document.getElementById('recycle-table-body');
             const badge = document.getElementById('recycle-badge');
@@ -2786,7 +2776,6 @@
             }).join('');
         }
 
-        /* 核心改进 4: 还原/恢复回收站数据 */
         async function restoreRecycleItem(id) {
             const rec = recycleData.find(item => item.id === id);
             if (!rec) return;
@@ -2794,7 +2783,7 @@
             let orig;
             try { orig = JSON.parse(rec.original_data); } catch(e) { alert("数据格式解析异常，无法恢复！"); return; }
 
-            delete orig.id; // 清除 ID 让数据库重发主键
+            delete orig.id;
 
             let res;
             if (rec.item_type === 'ORDER') {
@@ -2808,13 +2797,11 @@
                 return;
             }
 
-            // 从回收站表删除该记录
             await deleteSupabaseRest('recycled_items', `id=eq.${id}`);
             alert("成功将记录恢复至原有数据模块中！");
             fetchDataFromCloud();
         }
 
-        /* 核心改进 5: 彻底删除单项 */
         async function permanentlyDeleteRecycleItem(id) {
             if (confirm("确定要彻底删除该项目吗？此操作无法撤销！")) {
                 await deleteSupabaseRest('recycled_items', `id=eq.${id}`);
@@ -2822,7 +2809,6 @@
             }
         }
 
-        /* 核心改进 6: 自动清理超期 15 天数据 */
         async function autoClean15DaysRecycle() {
             if (!recycleData || recycleData.length === 0) return;
             const now = new Date().getTime();
@@ -2838,7 +2824,6 @@
             }
         }
 
-        /* 批量手动一键清理 */
         async function clearExpiredRecycleItems() {
             await autoClean15DaysRecycle();
             alert("超过 15 天的过期历史删除项目已清空！");
