@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>建德友联电器有限公司</title>
+    <title>建德友联电器 ERP</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome 矢量图标库 -->
@@ -663,9 +663,8 @@
     <!-- 逻辑处理脚本 -->
     <script>
         const RAW_SUPABASE_URL = "https://bmihjttxiqlzypdvxrdo.supabase.co";
-        // 请勿修改此处的占位符，Cloudflare 环境变量注入机制依赖于它
-        // 在代码头部定义全局变量
-window.SUPABASE_ANON_KEY = "__SUPABASE_KEY_PLACEHOLDER__"; 
+        // 如果环境变量注入未生效，可以直接在此处填入你的真实匿名密钥进行调试
+        const RAW_SUPABASE_KEY = "__SUPABASE_KEY_PLACEHOLDER__"; 
 
         function sanitizeHeaderString(str) {
             if (!str) return '';
