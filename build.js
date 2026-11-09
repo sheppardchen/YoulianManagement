@@ -1,22 +1,24 @@
 const fs = require('fs');
-const path = require('path');
 
-// 读取源码中的 index.html
+console.log("正在开始构建并注入环境变量...");
+
 let html = fs.readFileSync('index.html', 'utf8');
-
-// 从 Cloudflare 环境变量中获取 SUPABASE_KEY
 const supabaseKey = process.env.SUPABASE_KEY || '';
 
 if (!supabaseKey) {
-  console.error("错误: 未检测到 SUPABASE_KEY 环境变量！");
+  console.error("【构建错误】未检测到 SUPABASE_KEY 环境变量！请检查 Cloudflare 后台配置。");
   process.exit(1);
+} else {
+  console.log(`【构建成功】成功获取到环境变量，密钥长度为: ${supabaseKey.length} 字符`);
 }
 
-// 将占位符替换为真实密钥
+// 替换 HTML 中的占位符
+if (!html.includes('__SUPABASE_KEY_PLACEHOLDER__')) {
+  console.warn("【警告】在 index.html 中没有找到 __SUPABASE_KEY_PLACEHOLDER__ 占位符！");
+}
+
 html = html.replace('__SUPABASE_KEY_PLACEHOLDER__', supabaseKey);
 
-// 输出到 dist 目录供 Cloudflare Pages 托管
 fs.mkdirSync('dist', { recursive: true });
 fs.writeFileSync('dist/index.html', html);
-
-console.log("成功：Supabase 密钥已通过环境变量动态注入并打包至 dist/index.html");
+console.log("【构建完成】已成功输出至 dist/index.html");
