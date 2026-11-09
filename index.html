@@ -593,7 +593,8 @@
     <!-- 逻辑处理脚本 -->
     <script>
         const RAW_SUPABASE_URL = "https://bmihjttxiqlzypdvxrdo.supabase.co";
-        const RAW_SUPABASE_KEY = "__SUPABASE_KEY_PLACEHOLDER__"; 
+        // 使用 __CLOUDFLARE_INJECTED_SUPABASE_KEY__ 作为 Cloudflare 构建时自动替换的占位符
+        const RAW_SUPABASE_KEY = "__CLOUDFLARE_INJECTED_SUPABASE_KEY__"; 
 
         function sanitizeHeaderString(str) {
             if (!str) return '';
