@@ -666,8 +666,6 @@
         const RAW_SUPABASE_URL = "https://oyyqfqrkpuoewcuommvg.supabase.co";
         const RAW_SUPABASE_KEY = window.ENV_SUPABASE_KEY || "";
         // 彻底根除变量作用域与未初始化报错的完整常量声明
-        const RAW_SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJtaWhqdHR4aXFsenlwZHZ4cmRvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM0MTE5MzQsImV4cCI6MjEwODk4NzkzNH0.nx-XTeYs--D04QgfsX5rkMUEmBRUr_YK8-MU9-QGr6w";
-
         function sanitizeHeaderString(str) {
             if (!str) return '';
             return String(str).replace(/[^ -~]/g, "").trim();
