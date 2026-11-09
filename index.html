@@ -40,8 +40,12 @@
     <div id="login-overlay" class="fixed inset-0 bg-slate-900/90 backdrop-blur-md flex items-center justify-center z-[500] p-4">
         <div class="bg-white p-6 sm:p-8 rounded-3xl shadow-2xl max-w-md w-full space-y-6 border border-slate-100">
             <div class="text-center space-y-2">
-                <div class="inline-flex p-4 rounded-2xl bg-indigo-50 text-indigo-600 mb-1">
-                    <i class="fa-solid fa-shield-halved text-3xl"></i>
+                <div class="inline-flex p-3 rounded-2xl bg-indigo-50 text-indigo-600 mb-1 items-center justify-center">
+                    <!-- 替换为重整后高清流畅的品牌 SVG Logo -->
+                    <svg class="w-12 h-12" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M85 30 L160 105 L125 140 L85 100 L50 135 L15 100 Z" fill="#00529C"/>
+                        <path d="M115 170 L40 95 L75 60 L115 100 L150 65 L185 100 Z" fill="#009933"/>
+                    </svg>
                 </div>
                 <h2 class="text-xl sm:text-2xl font-bold text-slate-900">建德友联电器 ERP</h2>
                 <p class="text-xs sm:text-sm text-slate-500">请输入安全系统密码以访问核心数据模块</p>
@@ -110,8 +114,12 @@
         <header class="bg-slate-900 text-white shadow-lg sticky top-0 z-40">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex justify-between items-center">
                 <div class="flex items-center gap-3">
-                    <div class="bg-indigo-600 text-white p-2 rounded-xl">
-                        <i class="fa-solid fa-industry text-lg sm:text-xl"></i>
+                    <div class="bg-white/10 p-1.5 rounded-xl flex items-center justify-center">
+                        <!-- 重新优化的标准系统顶部矢量 Logo -->
+                        <svg class="w-8 h-8" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M85 30 L160 105 L125 140 L85 100 L50 135 L15 100 Z" fill="#00529C"/>
+                            <path d="M115 170 L40 95 L75 60 L115 100 L150 65 L185 100 Z" fill="#009933"/>
+                        </svg>
                     </div>
                     <div>
                         <h1 class="font-bold text-base sm:text-lg leading-tight">建德友联电器有限公司</h1>
@@ -187,6 +195,9 @@
                 </button>
                 <button id="tab-btn-report" onclick="switchTab('report')" class="px-3.5 sm:px-5 py-3 border-b-2 border-transparent font-medium text-xs sm:text-sm text-slate-500 hover:text-slate-700 flex items-center gap-1.5 whitespace-nowrap mobile-touch-target">
                     <i class="fa-solid fa-chart-pie"></i> 月度分析与报表
+                </button>
+                <button id="tab-btn-recycle" onclick="switchTab('recycle')" class="px-3.5 sm:px-5 py-3 border-b-2 border-transparent font-medium text-xs sm:text-sm text-slate-500 hover:text-rose-600 flex items-center gap-1.5 whitespace-nowrap mobile-touch-target ml-auto">
+                    <i class="fa-solid fa-trash-can"></i> 回收站 (保留15天) <span id="recycle-badge" class="bg-rose-100 text-rose-600 px-2 py-0.5 rounded-full text-[11px] font-bold">0</span>
                 </button>
             </div>
 
@@ -390,6 +401,38 @@
                     </h3>
                     <div id="customer-cards-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         <!-- 动态生成客户分析卡片 -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- 模块 5: 15天自动清理回收站 -->
+            <section id="sec-recycle" class="hidden space-y-4">
+                <div class="bg-amber-50 border border-amber-200 p-4 rounded-2xl flex justify-between items-center">
+                    <div class="space-y-1">
+                        <h2 class="text-sm font-bold text-amber-900 flex items-center gap-2">
+                            <i class="fa-solid fa-clock-rotate-left text-amber-600"></i> 数据安全回收站 (防误删)
+                        </h2>
+                        <p class="text-xs text-amber-700">删除的所有订单与原材料记录将在此保留 15 天，期间可随时恢复；超期系统自动永久清理。</p>
+                    </div>
+                    <button onclick="clearExpiredRecycleItems()" class="bg-rose-600 hover:bg-rose-700 text-white text-xs px-3.5 py-2 rounded-xl font-medium shadow-sm transition">
+                        <i class="fa-solid fa-broom"></i> 立即清理过期项
+                    </button>
+                </div>
+
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                    <div class="overflow-x-auto custom-scroll">
+                        <table class="w-full text-left text-xs sm:text-sm text-slate-600 min-w-[750px]">
+                            <tr class="bg-slate-50 border-b border-slate-200 text-slate-500 font-bold">
+                                <th class="p-3">类型</th>
+                                <th class="p-3">原记录摘要</th>
+                                <th class="p-3">删除时间</th>
+                                <th class="p-3">剩余保留时间</th>
+                                <th class="p-3 text-right">操作</th>
+                            </tr>
+                            <tbody id="recycle-table-body">
+                                <!-- 动态渲染回收站列表 -->
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </section>
@@ -623,7 +666,7 @@
     <!-- 逻辑处理脚本 -->
     <script>
         const RAW_SUPABASE_URL = "https://bmihjttxiqlzypdvxrdo.supabase.co";
-        // 统一使用 __SUPABASE_KEY_PLACEHOLDER__ 作为占位符，由 Cloudflare 构建时使用环境变量 SUPABASE_ANON_KEY 自动替换
+        // Cloudflare 构建替换占位符
         const RAW_SUPABASE_KEY = "__SUPABASE_KEY_PLACEHOLDER__"; 
 
         function sanitizeHeaderString(str) {
@@ -639,6 +682,7 @@
 
         let ordersData = [];
         let inventoryData = [];
+        let recycleData = [];
         let systemSettings = { app_pwd: DEFAULT_PWD };
         let chartInstance1 = null;
         let chartInstance2 = null;
@@ -892,15 +936,23 @@
             const inv = await fetchSupabaseRest('inventory', 'select=*&order=id.asc');
             inventoryData = Array.isArray(inv) ? inv : [];
 
+            // 加载回收站数据
+            const rec = await fetchSupabaseRest('recycled_items', 'select=*&order=id.desc');
+            recycleData = Array.isArray(rec) ? rec : [];
+
             renderOrders();
             renderOrderShippingModule();
             renderInventoryTable();
+            renderRecycleTable();
             updateKPIs();
             initReportMonthSelector();
+
+            // 自动清理超期15天的数据
+            autoClean15DaysRecycle();
         }
 
         function switchTab(tab) {
-            ['orders', 'order-shipping', 'inventory', 'report'].forEach(t => {
+            ['orders', 'order-shipping', 'inventory', 'report', 'recycle'].forEach(t => {
                 const sec = document.getElementById(`sec-${t}`);
                 const btn = document.getElementById(`tab-btn-${t}`);
                 if(sec) sec.classList.add('hidden');
@@ -909,7 +961,13 @@
             const activeSec = document.getElementById(`sec-${tab}`);
             const activeBtn = document.getElementById(`tab-btn-${tab}`);
             if(activeSec) activeSec.classList.remove('hidden');
-            if(activeBtn) activeBtn.className = "px-3.5 sm:px-5 py-3 border-b-2 border-indigo-600 font-medium text-xs sm:text-sm text-indigo-600 flex items-center gap-1.5 whitespace-nowrap mobile-touch-target";
+            if(activeBtn) {
+                if (tab === 'recycle') {
+                    activeBtn.className = "px-3.5 sm:px-5 py-3 border-b-2 border-rose-600 font-medium text-xs sm:text-sm text-rose-600 flex items-center gap-1.5 whitespace-nowrap mobile-touch-target ml-auto";
+                } else {
+                    activeBtn.className = "px-3.5 sm:px-5 py-3 border-b-2 border-indigo-600 font-medium text-xs sm:text-sm text-indigo-600 flex items-center gap-1.5 whitespace-nowrap mobile-touch-target";
+                }
+            }
 
             if (tab === 'report') renderDeepReport();
         }
@@ -1577,7 +1635,7 @@
                             <td class="p-2.5 text-slate-500">${o.remark || '无'}</td>
                             <td class="p-2.5 text-right space-x-2">
                                 <button type="button" onclick="openEditOrderModal(${o.id})" class="text-indigo-600 hover:text-indigo-800 p-1.5 mobile-touch-target" title="编辑订单"><i class="fa-solid fa-pen-to-square"></i></button>
-                                <button type="button" onclick="deleteOrder(${o.id})" class="text-rose-500 hover:text-rose-700 p-1.5 mobile-touch-target" title="删除订单"><i class="fa-solid fa-trash"></i></button>
+                                <button type="button" onclick="deleteOrder(${o.id})" class="text-rose-500 hover:text-rose-700 p-1.5 mobile-touch-target" title="移入回收站"><i class="fa-solid fa-trash"></i></button>
                             </td>
                         </tr>
                     `;
@@ -2200,7 +2258,7 @@
                             <td class="p-2.5 sm:p-3 text-slate-600">$${price.toFixed(2)}</td>
                             <td class="p-2.5 sm:p-3 text-emerald-600 font-bold">$${totalAmt.toFixed(2)}</td>
                             <td class="p-2.5 sm:p-3 text-slate-500">${i.remark || '无批注'}</td>
-                            <td class="p-2.5 sm:p-3 text-right"><button type="button" onclick="deleteInventory(${i.id})" class="text-rose-500 hover:text-rose-700 p-2"><i class="fa-solid fa-trash"></i></button></td>
+                            <td class="p-2.5 sm:p-3 text-right"><button type="button" onclick="deleteInventory(${i.id})" class="text-rose-500 hover:text-rose-700 p-2" title="移入回收站"><i class="fa-solid fa-trash"></i></button></td>
                         </tr>`;
                 }).join('');
             }
@@ -2579,7 +2637,7 @@
             const dueDate = document.getElementById('ord-due-date').value;
             const remark = document.getElementById('ord-remark').value.trim() || '无批注';
 
-            const rows = document.querySelectorAll('.model-row');
+            const rows = document.getElementById('order-models-container').querySelectorAll('.model-row');
             const modelsList = [];
             let totalQ = 0;
             let totalAmt = 0;
@@ -2629,18 +2687,162 @@
             closeOrderModal();
         }
 
+        /* 核心改进 1: 订单删除逻辑（移动至回收站，保留15天） */
         async function deleteOrder(id) {
-            if (confirm('确认删除该笔订单？')) {
+            const o = ordersData.find(item => item.id === id);
+            if (!o) return;
+
+            if (confirm(`确定要把订单【${o.order_no} (${o.customer})】移入回收站吗？（将在回收站保留 15 天）`)) {
+                // 1. 存入回收站表
+                const recPayload = {
+                    item_type: 'ORDER',
+                    original_data: JSON.stringify(o),
+                    summary_text: `订单号: ${o.order_no} | 客户: ${o.customer} | 金额: $${Number(o.total_amount || 0).toFixed(2)}`,
+                    deleted_at: new Date().toISOString()
+                };
+
+                const addRecRes = await postSupabaseRest('recycled_items', [recPayload], 'POST');
+                if (addRecRes.error) {
+                    alert("移入回收站失败: " + addRecRes.error.message + "\n注：若数据库未创建 recycled_items 表，请在 Supabase SQL 执行建表语句。");
+                    return;
+                }
+
+                // 2. 从主数据表物理删除
                 await deleteSupabaseRest('orders', `id=eq.${id}`);
                 fetchDataFromCloud();
             }
         }
 
+        /* 核心改进 2: 原材料删除逻辑（移动至回收站，保留15天） */
         async function deleteInventory(id) {
-            if (confirm('确认删除该条记录？')) {
+            const i = inventoryData.find(item => item.id === id);
+            if (!i) return;
+
+            if (confirm(`确定要把材料记录【${i.material} (${i.type === 'IN' ? '入库' : '出库'})】移入回收站吗？`)) {
+                const recPayload = {
+                    item_type: 'INVENTORY',
+                    original_data: JSON.stringify(i),
+                    summary_text: `材料: ${i.material} | 供应商: ${i.supplier || '无'} | 类型: ${i.type === 'IN' ? '入库' : '出库'} | 数量: ${i.quantity}${i.unit || '个'}`,
+                    deleted_at: new Date().toISOString()
+                };
+
+                const addRecRes = await postSupabaseRest('recycled_items', [recPayload], 'POST');
+                if (addRecRes.error) {
+                    alert("移入回收站失败: " + addRecRes.error.message);
+                    return;
+                }
+
                 await deleteSupabaseRest('inventory', `id=eq.${id}`);
                 fetchDataFromCloud();
             }
+        }
+
+        /* 核心改进 3: 回收站列表渲染与计算 */
+        function renderRecycleTable() {
+            const tbody = document.getElementById('recycle-table-body');
+            const badge = document.getElementById('recycle-badge');
+            if(badge) badge.innerText = recycleData.length;
+            if(!tbody) return;
+
+            if (recycleData.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="text-center py-8 text-slate-400 text-xs">回收站暂无已被删除的项目</td></tr>`;
+                return;
+            }
+
+            const now = new Date().getTime();
+
+            tbody.innerHTML = recycleData.map(item => {
+                const delTime = new Date(item.deleted_at || Date.now());
+                const expireTime = delTime.getTime() + (15 * 24 * 60 * 60 * 1000);
+                const remainingDiffMs = expireTime - now;
+
+                let remainingDays = Math.ceil(remainingDiffMs / (1000 * 60 * 60 * 24));
+                if (remainingDays < 0) remainingDays = 0;
+
+                const isOrder = item.item_type === 'ORDER';
+
+                return `
+                    <tr class="border-b border-slate-100 hover:bg-slate-50">
+                        <td class="p-3">
+                            <span class="px-2 py-0.5 rounded text-[11px] font-bold ${isOrder ? 'bg-indigo-100 text-indigo-700' : 'bg-emerald-100 text-emerald-700'}">
+                                ${isOrder ? '客户订单' : '原材料记录'}
+                            </span>
+                        </td>
+                        <td class="p-3 font-medium text-slate-800">${item.summary_text || '记录摘要'}</td>
+                        <td class="p-3 text-slate-500 font-mono text-xs">${delTime.toLocaleString('zh-CN', { hour12: false })}</td>
+                        <td class="p-3 font-bold ${remainingDays <= 3 ? 'text-rose-600' : 'text-amber-600'}">
+                            ${remainingDays > 0 ? `还可保留 ${remainingDays} 天` : '已超期待清理'}
+                        </td>
+                        <td class="p-3 text-right space-x-2">
+                            <button onclick="restoreRecycleItem(${item.id})" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-600 border border-indigo-200 px-3 py-1 rounded-lg text-xs font-bold transition">
+                                <i class="fa-solid fa-rotate-left"></i> 恢复数据
+                            </button>
+                            <button onclick="permanentlyDeleteRecycleItem(${item.id})" class="bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 px-3 py-1 rounded-lg text-xs font-bold transition">
+                                彻底删除
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        /* 核心改进 4: 还原/恢复回收站数据 */
+        async function restoreRecycleItem(id) {
+            const rec = recycleData.find(item => item.id === id);
+            if (!rec) return;
+
+            let orig;
+            try { orig = JSON.parse(rec.original_data); } catch(e) { alert("数据格式解析异常，无法恢复！"); return; }
+
+            delete orig.id; // 清除 ID 让数据库重发主键
+
+            let res;
+            if (rec.item_type === 'ORDER') {
+                res = await postSupabaseRest('orders', [orig], 'POST');
+            } else if (rec.item_type === 'INVENTORY') {
+                res = await postSupabaseRest('inventory', [orig], 'POST');
+            }
+
+            if (res && res.error) {
+                alert("恢复失败: " + res.error.message);
+                return;
+            }
+
+            // 从回收站表删除该记录
+            await deleteSupabaseRest('recycled_items', `id=eq.${id}`);
+            alert("成功将记录恢复至原有数据模块中！");
+            fetchDataFromCloud();
+        }
+
+        /* 核心改进 5: 彻底删除单项 */
+        async function permanentlyDeleteRecycleItem(id) {
+            if (confirm("确定要彻底删除该项目吗？此操作无法撤销！")) {
+                await deleteSupabaseRest('recycled_items', `id=eq.${id}`);
+                fetchDataFromCloud();
+            }
+        }
+
+        /* 核心改进 6: 自动清理超期 15 天数据 */
+        async function autoClean15DaysRecycle() {
+            if (!recycleData || recycleData.length === 0) return;
+            const now = new Date().getTime();
+            const fifteenDaysMs = 15 * 24 * 60 * 60 * 1000;
+
+            const expiredItems = recycleData.filter(item => {
+                const delMs = new Date(item.deleted_at || Date.now()).getTime();
+                return (now - delMs) > fifteenDaysMs;
+            });
+
+            for (let exp of expiredItems) {
+                await deleteSupabaseRest('recycled_items', `id=eq.${exp.id}`);
+            }
+        }
+
+        /* 批量手动一键清理 */
+        async function clearExpiredRecycleItems() {
+            await autoClean15DaysRecycle();
+            alert("超过 15 天的过期历史删除项目已清空！");
+            fetchDataFromCloud();
         }
     </script>
 </body>
