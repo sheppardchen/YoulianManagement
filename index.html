@@ -3,376 +3,406 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>物料订单管理系统 - 建德友联电器有限公司</title>
+    <title>建德友联电器有限公司 - 核心业务与ERP管理系统</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Chart.js CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- FontAwesome 图标 -->
+    <!-- FontAwesome 矢量图标库 -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js 图表库 CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
+        .custom-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scroll::-webkit-scrollbar-track { background: #f1f5f9; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        .custom-scroll::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
         @media (max-width: 640px) {
             .mobile-touch-target { min-height: 44px; }
-            .mobile-order-first { order: -1 !important; }
-            .pc-table-view { display: none !important; }
-            .mobile-card-view { display: block !important; }
+            .pc-table-view { display: none; }
+            .mobile-card-view { display: block; }
         }
         @media (min-width: 641px) {
-            .pc-table-view { display: block !important; }
-            .mobile-card-view { display: none !important; }
+            .pc-table-view { display: block; }
+            .mobile-card-view { display: none; }
         }
-        .custom-scroll::-webkit-scrollbar { height: 6px; width: 6px; }
-        .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
-        
-        /* 标准 A4 纸打印适配 */
+
         @media print {
-            @page {
-                size: A4;
-                margin: 1.5cm;
-            }
-            html, body {
-                width: 210mm !important;
-                min-height: 297mm !important;
-                margin: 0 !important;
-                padding: 0 !important;
-                background: #fff !important;
-            }
             body * { visibility: hidden; }
             #modal-delivery-note, #modal-delivery-note * { visibility: visible; }
-            #modal-delivery-note { 
-                position: fixed !important; 
-                left: 0 !important; 
-                top: 0 !important; 
-                width: 100% !important; 
-                height: 100% !important;
-                margin: 0 !important; 
-                padding: 0 !important; 
-                background: white !important; 
-                box-shadow: none !important;
-                border: none !important;
-                overflow: visible !important;
-            }
+            #modal-delivery-note { position: absolute; left: 0; top: 0; width: 100%; height: auto; background: white; z-index: 9999; padding: 0; }
             .no-print { display: none !important; }
-            
-            #delivery-note-content {
-                width: 100% !important;
-                box-sizing: border-box !important;
-                padding: 0 !important;
-                font-size: 13px !important;
-                margin: 0 auto !important;
-            }
         }
     </style>
 </head>
-<body class="bg-slate-100 font-sans min-h-screen text-slate-800 antialiased selection:bg-indigo-500 selection:text-white pb-12 sm:pb-0">
+<body class="bg-slate-100 text-slate-800 font-sans antialiased min-h-screen flex flex-col">
 
-    <!-- 1. 登录与找回密码遮罩页面 -->
-    <div id="login-overlay" class="fixed inset-0 bg-slate-900/95 backdrop-blur-md z-[100] flex items-center justify-center p-4 overflow-y-auto">
-        <div class="bg-white p-6 sm:p-8 rounded-2xl shadow-2xl max-w-md w-full border border-slate-100 my-auto space-y-4">
-            <div class="text-center mb-4">
-                <div class="flex justify-center mb-3">
-                    <img src="data:image/avif;base64,AAAAIGZ0eWF2aWYgAAAEAGF2aWZtaWYgTUARAWEAAAGQYnJhbmRhdmlmAAAAGm1ldGFkYXRhAAAAAAAAACJwaXRtAAAAAAAEAAAAaWxtZ3IAAAACAAAAImlwcnAAAABKaXBjX2luZm8AAAAUaXByc3B0c3AAAAAEdnJlZgAAAAHQbG9jYQAAAAAABAAAAAEAAAEQAAEAAABwaW5mAAAAAAIAAAAiYXVjaAEAAAAQY3dlYgAAAAAAAAAAAE5hdGkAAAAAAAEAAABkYmlnaQAAAAEAAACbY29sbhEABgAIAAEAAAAKZm5kYQAAAAAABAAAADhyZWYAAAAAAAAAAQAAAARkYXRhAAAACmltZzEAAAAA" alt="友联 Logo" class="h-14 sm:h-16 w-auto object-contain rounded-xl shadow-xs">
+    <!-- 登录遮罩层 -->
+    <div id="login-overlay" class="fixed inset-0 bg-slate-900/90 backdrop-blur-md flex items-center justify-center z-[500] p-4">
+        <div class="bg-white p-6 sm:p-8 rounded-3xl shadow-2xl max-w-md w-full space-y-6 border border-slate-100">
+            <div class="text-center space-y-2">
+                <div class="inline-flex p-4 rounded-2xl bg-indigo-50 text-indigo-600 mb-1">
+                    <i class="fa-solid fa-shield-halved text-3xl"></i>
                 </div>
-                <h2 class="text-xl sm:text-2xl font-bold text-slate-800 tracking-tight mt-1">物料订单管理系统</h2>
+                <h2 class="text-xl sm:text-2xl font-bold text-slate-900">建德友联电器 ERP</h2>
+                <p class="text-xs sm:text-sm text-slate-500">请输入安全系统密码以访问核心数据模块</p>
             </div>
 
-            <div id="login-due-alert" class="hidden bg-amber-50 border border-amber-200 text-amber-900 p-3 rounded-xl text-xs space-y-1">
-                <div class="font-bold flex items-center gap-1.5"><i class="fa-solid fa-triangle-exclamation text-amber-600"></i> 发货到期提醒 (近7天内)</div>
-                <div id="login-due-alert-content" class="leading-relaxed"></div>
-            </div>
-            
-            <form id="login-form" onsubmit="handleAuthSubmit(event)" class="space-y-4 text-sm" autocomplete="off">
-                <div>
-                    <label class="block font-medium text-slate-700 mb-1">登录账号</label>
-                    <div class="relative flex items-center border border-slate-300 bg-slate-100 rounded-xl overflow-hidden">
-                        <span class="w-12 flex items-center justify-center text-slate-400 bg-slate-100 shrink-0"><i class="fa-solid fa-user"></i></span>
-                        <input type="text" id="auth-input-id" value="YoulianGroup" readonly class="w-full bg-slate-100 text-slate-600 p-3 sm:p-2.5 outline-none cursor-not-allowed font-medium border-0">
-                    </div>
+            <!-- 登录逾期/临期发货预警提示框 -->
+            <div id="login-due-alert" class="hidden bg-amber-50 border border-amber-200 text-amber-800 p-3.5 rounded-xl text-xs space-y-1">
+                <div class="font-bold flex items-center gap-1.5 text-amber-900">
+                    <i class="fa-solid fa-triangle-exclamation text-amber-600"></i> 近期订单发货预警
                 </div>
+                <div id="login-due-alert-content" class="text-[11px] leading-relaxed"></div>
+            </div>
+
+            <form onsubmit="handleAuthSubmit(event)" class="space-y-4">
                 <div>
-                    <label class="block font-medium text-slate-700 mb-1">密码</label>
-                    <div class="relative flex items-center border border-slate-300 bg-white rounded-xl overflow-hidden focus-within:ring-2 focus-within:ring-indigo-500">
-                        <span class="w-12 flex items-center justify-center text-slate-400 bg-slate-50 shrink-0"><i class="fa-solid fa-key"></i></span>
-                        <input type="password" id="auth-password" autocomplete="current-password" required class="w-full bg-white p-3 sm:p-2.5 outline-none border-0" placeholder="请输入密码">
-                        <button type="button" onclick="togglePasswordVisibility()" class="w-12 flex items-center justify-center text-slate-400 hover:text-slate-600 bg-white shrink-0 focus:outline-none mobile-touch-target">
-                            <i class="fa-solid fa-eye" id="pwd-eye-icon"></i>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1.5">系统管理密码</label>
+                    <div class="relative">
+                        <input type="password" id="auth-password" required class="w-full border border-slate-300 p-3.5 rounded-xl text-sm outline-none focus:ring-2 focus:ring-indigo-500 pr-10" placeholder="请输入系统密码 (初始默认: 12345678)">
+                        <button type="button" onclick="togglePasswordVisibility()" class="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                            <i id="pwd-eye-icon" class="fa-solid fa-eye"></i>
                         </button>
                     </div>
                 </div>
 
-                <div class="flex items-center justify-between text-xs pt-1">
-                    <label class="flex items-center gap-2 cursor-pointer select-none text-slate-600">
-                        <input type="checkbox" id="remember-me-checkbox" checked class="w-4 h-4 text-indigo-600 rounded border-slate-300 focus:ring-indigo-500">
-                        <span>常登录模式 (保持30天免重复登录)</span>
+                <div class="flex items-center justify-between text-xs text-slate-600">
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" id="remember-me-checkbox" class="rounded text-indigo-600 focus:ring-indigo-500 w-4 h-4">
+                        <span>记住密码 (下次免登录)</span>
                     </label>
-                    <button type="button" onclick="showEmailResetModal()" class="text-indigo-600 hover:underline font-medium"><i class="fa-regular fa-envelope"></i> 邮箱找回密码</button>
+                    <button type="button" onclick="showEmailResetModal()" class="text-indigo-600 hover:text-indigo-800 font-medium">忘记密码?</button>
                 </div>
-                
-                <div id="auth-msg" class="text-xs font-medium hidden p-2.5 rounded-lg border"></div>
 
-                <button type="submit" id="auth-submit-btn" class="w-full bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white py-3.5 rounded-xl font-bold transition shadow-md shadow-indigo-200 mobile-touch-target flex items-center justify-center gap-2 cursor-pointer">
-                    <i class="fa-solid fa-shield-halved"></i> <span>安全登录</span>
+                <div id="auth-msg" class="hidden"></div>
+
+                <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-3.5 rounded-xl text-sm shadow-md shadow-indigo-200 transition mobile-touch-target">
+                    解锁并进入系统 <i class="fa-solid fa-arrow-right ml-1"></i>
                 </button>
             </form>
         </div>
     </div>
 
-    <!-- 弹窗：邮箱找回密码 -->
-    <div id="modal-email-reset" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm hidden flex items-center justify-center z-[110] p-4">
-        <div class="bg-white p-6 rounded-2xl shadow-2xl max-w-sm w-full space-y-4 border border-slate-100">
-            <div class="flex justify-between items-center">
-                <h3 class="text-base font-bold text-slate-800 flex items-center gap-2"><i class="fa-regular fa-envelope text-indigo-600"></i> 邮箱找回密码</h3>
-                <button onclick="closeEmailResetModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark"></i></button>
-            </div>
+    <!-- 邮箱重置密码弹窗 -->
+    <div id="modal-email-reset" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden flex items-center justify-center z-[600] p-4">
+        <div class="bg-white p-6 rounded-2xl shadow-xl max-w-sm w-full space-y-4">
+            <h3 class="text-base font-bold text-slate-800 flex items-center gap-2">
+                <i class="fa-solid fa-envelope text-indigo-600"></i> 绑定邮箱找回密码
+            </h3>
+            <p class="text-xs text-slate-500">请输入您注册时绑定的管理员邮箱，系统将发送安全重置指令。</p>
             <form onsubmit="handleSendEmailReset(event)" class="space-y-3 text-xs">
                 <div>
-                    <label class="block font-medium mb-1 text-slate-700">预留关联邮箱 *</label>
-                    <input type="email" id="reset-email-input" required class="w-full border border-slate-300 p-3 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500" placeholder="例如：user@youlian.com">
+                    <label class="block font-medium mb-1 text-slate-700">管理员邮箱</label>
+                    <input type="email" id="reset-email-input" required class="w-full border border-slate-300 p-3 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500" placeholder="admin@youlian-elec.com">
                 </div>
-                <div id="email-reset-msg" class="text-xs hidden p-2.5 rounded-lg border"></div>
+                <div id="email-reset-msg" class="hidden text-xs p-2 rounded bg-emerald-50 text-emerald-700 border border-emerald-200"></div>
                 <div class="flex justify-end gap-2 pt-2">
-                    <button type="button" onclick="closeEmailResetModal()" class="px-4 py-2.5 border border-slate-300 text-slate-600 rounded-xl font-medium mobile-touch-target">关闭</button>
-                    <button type="submit" class="px-4 py-2.5 bg-indigo-600 text-white rounded-xl font-medium hover:bg-indigo-700 shadow-md mobile-touch-target">发送重置指令</button>
+                    <button type="button" onclick="closeEmailResetModal()" class="px-4 py-2 border border-slate-300 text-slate-600 rounded-lg">取消</button>
+                    <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700">发送验证邮件</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- 2. 主页面结构 -->
-    <div id="main-app" class="hidden min-h-screen flex flex-col">
-        <header class="bg-slate-900 text-white shadow-md sticky top-0 z-50">
-            <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-3 flex justify-between items-center">
-                <div class="flex items-center space-x-2 sm:space-x-3">
-                    <div class="bg-white px-2 py-0.5 sm:px-3 sm:py-1 rounded-lg flex items-center shadow-sm">
-                        <img src="data:image/avif;base64,AAAAIGZ0eWF2aWYgAAAEAGF2aWZtaWYgTUARAWEAAAGQYnJhbmRhdmlmAAAAGm1ldGFkYXRhAAAAAAAAACJwaXRtAAAAAAAEAAAAaWxtZ3IAAAACAAAAImlwcnAAAABKaXBjX2luZm8AAAAUaXByc3B0c3AAAAAEdnJlZgAAAAHQbG9jYQAAAAAABAAAAAEAAAEQAAEAAABwaW5mAAAAAAIAAAAiYXVjaAEAAAAQY3dlYgAAAAAAAAAAAE5hdGkAAAAAAAEAAABkYmlnaQAAAAEAAACbY29sbhEABgAIAAEAAAAKZm5kYQAAAAAABAAAADhyZWYAAAAAAAAAAQAAAARkYXRhAAAACmltZzEAAAAA" alt="友联 Logo" class="h-6 sm:h-8 w-auto object-contain">
+    <!-- 主界面系统内容 -->
+    <div id="main-app" class="hidden flex-1 flex flex-col">
+        <!-- 顶栏 Navigation -->
+        <header class="bg-slate-900 text-white shadow-lg sticky top-0 z-40">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex justify-between items-center">
+                <div class="flex items-center gap-3">
+                    <div class="bg-indigo-600 text-white p-2 rounded-xl">
+                        <i class="fa-solid fa-industry text-lg sm:text-xl"></i>
                     </div>
-                    <h1 class="text-sm sm:text-xl font-bold tracking-wide truncate max-w-[130px] sm:max-w-none">订单管理 <span class="text-[10px] sm:text-xs font-normal bg-indigo-600 px-1.5 py-0.5 rounded ml-1 hidden sm:inline">YoulianGroup</span></h1>
+                    <div>
+                        <h1 class="font-bold text-base sm:text-lg leading-tight">建德友联电器有限公司</h1>
+                        <p class="text-[11px] text-indigo-300 hidden sm:block">核心业务与 ERP 综合管理系统</p>
+                    </div>
                 </div>
-                <div class="flex items-center space-x-1.5 sm:space-x-3">
-                    <button onclick="openChangePwdModal()" class="bg-indigo-600 hover:bg-indigo-500 text-[11px] sm:text-xs px-3 py-2 rounded-lg font-medium transition flex items-center gap-1 mobile-touch-target">
+
+                <!-- 全局搜索框 -->
+                <div class="flex-1 max-w-md mx-4">
+                    <div class="relative">
+                        <input type="text" id="global-search-input" onkeydown="handleGlobalSearchKeyDown(event)" placeholder="搜索客户/订单号/款式型号/材料..." class="w-full bg-slate-800 text-white placeholder-slate-400 text-xs sm:text-sm pl-9 pr-16 py-2 rounded-xl border border-slate-700 outline-none focus:ring-2 focus:ring-indigo-500">
+                        <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                        <button type="button" onclick="executeGlobalSearch()" class="absolute right-1.5 top-1/2 -translate-y-1/2 bg-indigo-600 hover:bg-indigo-700 text-white px-2.5 py-1 rounded-lg text-xs font-medium cursor-pointer">
+                            搜索
+                        </button>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-2 sm:gap-3">
+                    <button onclick="openChangePwdModal()" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-2 rounded-xl flex items-center gap-1.5 transition border border-slate-700 mobile-touch-target">
                         <i class="fa-solid fa-key"></i> <span class="hidden sm:inline">修改密码</span>
                     </button>
-                    <button onclick="handleLogout()" class="bg-rose-600 hover:bg-rose-500 text-[11px] sm:text-xs px-3 py-2 rounded-lg font-medium transition flex items-center gap-1 mobile-touch-target">
-                        <i class="fa-solid fa-right-from-bracket"></i> <span class="hidden sm:inline">退出</span>
+                    <button onclick="handleLogout()" class="text-xs bg-rose-600/20 hover:bg-rose-600 text-rose-300 hover:text-white border border-rose-500/30 px-3 py-2 rounded-xl flex items-center gap-1.5 transition mobile-touch-target">
+                        <i class="fa-solid fa-power-off"></i> <span class="hidden sm:inline">安全退出</span>
                     </button>
                 </div>
             </div>
         </header>
 
-        <main class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-4 sm:space-y-6 flex-1 w-full">
-            <!-- 全局搜索栏 -->
-            <div class="bg-white p-3.5 sm:p-4 rounded-xl shadow-sm border border-slate-200 flex items-center gap-2 sm:gap-3">
-                <span class="text-slate-400 text-sm pl-2"><i class="fa-solid fa-magnifying-glass"></i></span>
-                <input type="text" id="global-search-input" onkeydown="handleGlobalSearchKeyDown(event)" placeholder="全局搜索：输入客户名, 订单号, 型号, 供应商..." class="w-full text-xs sm:text-sm outline-none bg-transparent text-slate-700">
-                <button type="button" onclick="executeGlobalSearch()" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm px-3.5 sm:px-4 py-2 rounded-lg font-medium transition flex items-center gap-1.5 shrink-0 mobile-touch-target cursor-pointer">
-                    <i class="fa-solid fa-magnifying-glass"></i> <span>搜索</span>
+        <!-- KPI 看板面板 -->
+        <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 w-full">
+            <div class="grid grid-cols-2 sm:grid-cols-5 gap-3 sm:gap-4">
+                <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm space-y-1">
+                    <div class="text-xs text-slate-400 font-medium">累计订单数</div>
+                    <div id="kpi-orders" class="text-lg sm:text-2xl font-bold text-slate-800">0 笔</div>
+                </div>
+                <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm space-y-1">
+                    <div class="text-xs text-slate-400 font-medium">累计营收金额 ($)</div>
+                    <div id="kpi-amount" class="text-lg sm:text-2xl font-bold text-emerald-600">$0.00</div>
+                </div>
+                <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm space-y-1">
+                    <div class="text-xs text-slate-400 font-medium">累计毛利润 ($)</div>
+                    <div id="kpi-profit" class="text-lg sm:text-2xl font-bold text-purple-600">$0.00</div>
+                </div>
+                <div onclick="openDashboardInvModal('IN')" class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm space-y-1 cursor-pointer hover:bg-slate-50 transition">
+                    <div class="text-xs text-slate-400 font-medium flex justify-between items-center">
+                        <span>原材料总入库</span>
+                        <i class="fa-solid fa-circle-chevron-right text-blue-500 text-xs"></i>
+                    </div>
+                    <div id="kpi-in-stock" class="text-lg sm:text-2xl font-bold text-blue-600">0 个</div>
+                </div>
+                <div onclick="openDashboardInvModal('OUT')" class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm space-y-1 cursor-pointer hover:bg-slate-50 transition col-span-2 sm:col-span-1">
+                    <div class="text-xs text-slate-400 font-medium flex justify-between items-center">
+                        <span>原材料总出库</span>
+                        <i class="fa-solid fa-circle-chevron-right text-rose-500 text-xs"></i>
+                    </div>
+                    <div id="kpi-out-stock" class="text-lg sm:text-2xl font-bold text-rose-600">0 个</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 主选项卡 Nav Tabs -->
+        <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-1 w-full flex flex-col space-y-6">
+            <div class="flex border-b border-slate-200 overflow-x-auto custom-scroll bg-white rounded-2xl p-1 shadow-sm">
+                <button id="tab-btn-orders" onclick="switchTab('orders')" class="px-3.5 sm:px-5 py-3 border-b-2 border-indigo-600 font-medium text-xs sm:text-sm text-indigo-600 flex items-center gap-1.5 whitespace-nowrap mobile-touch-target">
+                    <i class="fa-solid fa-users-viewfinder"></i> 客户订单管理
+                </button>
+                <button id="tab-btn-order-shipping" onclick="switchTab('order-shipping')" class="px-3.5 sm:px-5 py-3 border-b-2 border-transparent font-medium text-xs sm:text-sm text-slate-500 hover:text-slate-700 flex items-center gap-1.5 whitespace-nowrap mobile-touch-target">
+                    <i class="fa-solid fa-truck-fast"></i> 订单发货与独立出库单
+                </button>
+                <button id="tab-btn-inventory" onclick="switchTab('inventory')" class="px-3.5 sm:px-5 py-3 border-b-2 border-transparent font-medium text-xs sm:text-sm text-slate-500 hover:text-slate-700 flex items-center gap-1.5 whitespace-nowrap mobile-touch-target">
+                    <i class="fa-solid fa-boxes-packing"></i> 原材料出入库与库存
+                </button>
+                <button id="tab-btn-report" onclick="switchTab('report')" class="px-3.5 sm:px-5 py-3 border-b-2 border-transparent font-medium text-xs sm:text-sm text-slate-500 hover:text-slate-700 flex items-center gap-1.5 whitespace-nowrap mobile-touch-target">
+                    <i class="fa-solid fa-chart-pie"></i> 月度分析与报表
                 </button>
             </div>
 
-            <!-- KPI 看板 -->
-            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
-                <div class="bg-white p-3.5 sm:p-5 rounded-xl shadow-sm border border-slate-200 cursor-pointer hover:bg-slate-50 transition" onclick="openReportDetailModal('qty')">
-                    <div class="flex justify-between items-center text-slate-500 text-xs sm:text-sm">
-                        <span>月度总订单数</span>
-                        <i class="fa-solid fa-cart-shopping text-indigo-500"></i>
-                    </div>
-                    <div class="text-base sm:text-2xl font-bold mt-1.5 sm:mt-2 truncate" id="kpi-orders">0 笔</div>
-                </div>
-                <div class="bg-white p-3.5 sm:p-5 rounded-xl shadow-sm border border-slate-200 cursor-pointer hover:bg-slate-50 transition" onclick="openReportDetailModal('amount')">
-                    <div class="flex justify-between items-center text-slate-500 text-xs sm:text-sm">
-                        <span>月度订单总额 ($)</span>
-                        <i class="fa-solid fa-sack-dollar text-emerald-500"></i>
-                    </div>
-                    <div class="text-base sm:text-2xl font-bold mt-1.5 sm:mt-2 text-emerald-600 truncate" id="kpi-amount">$0.00</div>
-                </div>
-                <div class="bg-white p-3.5 sm:p-5 rounded-xl shadow-sm border border-slate-200 cursor-pointer hover:bg-slate-50 transition" onclick="openReportDetailModal('profit')">
-                    <div class="flex justify-between items-center text-slate-500 text-xs sm:text-sm">
-                        <span>当月毛利润 ($)</span>
-                        <i class="fa-solid fa-chart-line text-purple-600"></i>
-                    </div>
-                    <div class="text-base sm:text-2xl font-bold mt-1.5 sm:mt-2 text-purple-600 truncate" id="kpi-profit">$0.00</div>
-                </div>
-                <div class="bg-white p-3.5 sm:p-5 rounded-xl shadow-sm border border-slate-200 cursor-pointer hover:bg-slate-50 transition" onclick="openDashboardInvModal('IN')">
-                    <div class="flex justify-between items-center text-slate-500 text-xs sm:text-sm">
-                        <span>原材料总入库</span>
-                        <i class="fa-solid fa-arrow-down-long text-blue-500"></i>
-                    </div>
-                    <div class="text-base sm:text-2xl font-bold mt-1.5 sm:mt-2 text-blue-600 truncate" id="kpi-in-stock">0 件</div>
-                </div>
-                <div class="bg-white p-3.5 sm:p-5 rounded-xl shadow-sm border border-slate-200 cursor-pointer hover:bg-slate-50 transition" onclick="openDashboardInvModal('OUT')">
-                    <div class="flex justify-between items-center text-slate-500 text-xs sm:text-sm">
-                        <span>原材料总出库</span>
-                        <i class="fa-solid fa-arrow-up-long text-rose-500"></i>
-                    </div>
-                    <div class="text-base sm:text-2xl font-bold mt-1.5 sm:mt-2 text-rose-600 truncate" id="kpi-out-stock">0 件</div>
-                </div>
-            </div>
-
-            <!-- Tab 导航 -->
-            <div class="flex border-b border-slate-200 bg-white rounded-t-xl px-2 sm:px-4 pt-1.5 overflow-x-auto custom-scroll">
-                <button onclick="switchTab('orders')" id="tab-btn-orders" class="px-3.5 sm:px-5 py-3 border-b-2 border-indigo-600 font-medium text-xs sm:text-sm text-indigo-600 flex items-center gap-1.5 whitespace-nowrap mobile-order-first mobile-touch-target"><i class="fa-solid fa-users-viewfinder"></i> 客户订单管理</button>
-                <button onclick="switchTab('order-shipping')" id="tab-btn-order-shipping" class="px-3.5 sm:px-5 py-3 border-b-2 border-transparent font-medium text-xs sm:text-sm text-slate-500 hover:text-slate-700 flex items-center gap-1.5 whitespace-nowrap mobile-touch-target"><i class="fa-solid fa-truck-fast"></i> 客户订单出库与发货模块</button>
-                <button onclick="switchTab('inventory')" id="tab-btn-inventory" class="px-3.5 sm:px-5 py-3 border-b-2 border-transparent font-medium text-xs sm:text-sm text-slate-500 hover:text-slate-700 flex items-center gap-1.5 whitespace-nowrap mobile-touch-target"><i class="fa-solid fa-boxes-packing"></i> 原材料出入库与库存联动</button>
-                <button onclick="switchTab('report')" id="tab-btn-report" class="px-3.5 sm:px-5 py-3 border-b-2 border-transparent font-medium text-xs sm:text-sm text-slate-500 hover:text-slate-700 flex items-center gap-1.5 whitespace-nowrap mobile-touch-target"><i class="fa-solid fa-chart-pie"></i> 月度深度分析与报表</button>
-            </div>
-
-            <!-- 1. 客户订单管理模块 -->
-            <section id="sec-orders" class="bg-white p-3.5 sm:p-6 rounded-b-xl shadow-sm border border-t-0 border-slate-200">
-                <div class="flex justify-between items-center mb-4 sm:mb-6">
-                    <div class="flex items-center gap-3">
-                        <h2 class="text-base sm:text-lg font-bold text-slate-800">客户订单分类列表</h2>
-                        <button onclick="toggleAllSections('orders')" id="toggle-all-orders-btn" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-600 px-2.5 py-1.5 rounded-lg font-medium transition mobile-touch-target">
-                            <i class="fa-solid fa-angles-down"></i> 全部折叠/展开
-                        </button>
-                    </div>
-                    <button type="button" onclick="openOrderModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm px-4 py-2.5 rounded-lg font-medium transition flex items-center gap-1.5 shadow-sm mobile-touch-target cursor-pointer z-20"><i class="fa-solid fa-plus"></i> 新增客户订单</button>
-                </div>
-                <div id="orders-grouped-container" class="space-y-3 sm:space-y-4"></div>
-            </section>
-
-            <!-- 2. 独立发货模块 -->
-            <section id="sec-order-shipping" class="bg-white p-3.5 sm:p-6 rounded-b-xl shadow-sm border border-t-0 border-slate-200 hidden space-y-4">
-                <div onclick="toggleSectionCollapse('order-shipping-content-wrap', 'shipping-toggle-icon')" class="bg-slate-50 p-3.5 rounded-xl flex justify-between items-center cursor-pointer hover:bg-slate-100 transition border border-slate-200">
+            <!-- 模块 1: 客户订单管理 -->
+            <section id="sec-orders" class="space-y-4">
+                <div class="flex justify-between items-center">
                     <h2 class="text-base sm:text-lg font-bold text-slate-800 flex items-center gap-2">
-                        <i class="fa-solid fa-truck-ramp-box text-indigo-600"></i> 客户订单发货与出库
+                        <i class="fa-solid fa-folder-tree text-indigo-600"></i> 按客户归类订单列表
                     </h2>
-                    <span class="text-xs text-slate-500 flex items-center gap-1.5 font-medium">
-                        <span id="shipping-count-badge" class="bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded font-bold">0笔</span> 
-                        <i id="shipping-toggle-icon" class="fa-solid fa-chevron-down transition-transform duration-200"></i>
-                    </span>
-                </div>
-                
-                <div id="order-shipping-content-wrap" class="space-y-4 pt-1">
-                    <div class="pc-table-view overflow-x-auto custom-scroll border border-slate-200 rounded-lg">
-                        <table class="w-full text-xs sm:text-sm text-left text-slate-600 min-w-[1000px]">
-                            <thead class="bg-slate-50 text-slate-700 border-b border-slate-200">
-                                <tr>
-                                    <th class="p-3">订单号</th><th class="p-3">客户名称</th><th class="p-3">型号/款式明细</th><th class="p-3">预计发货时间</th><th class="p-3">订单总数</th><th class="p-3">已发货总计</th><th class="p-3">已发货总金额 ($)</th><th class="p-3">剩余未发货明细</th><th class="p-3">历次出库批次明细与出库单</th><th class="p-3 text-right">独立发货操作</th>
-                                </tr>
-                            </thead>
-                            <tbody id="order-shipping-table-body"></tbody>
-                        </table>
-                    </div>
-                    <div id="order-shipping-card-body" class="mobile-card-view space-y-3"></div>
-                </div>
-            </section>
-
-            <!-- 3. 原材料模块 -->
-            <section id="sec-inventory" class="bg-white p-3.5 sm:p-6 rounded-b-xl shadow-sm border border-t-0 border-slate-200 hidden space-y-6">
-                <div>
-                    <h3 class="text-xs sm:text-sm font-bold text-slate-700 mb-3 flex items-center gap-2"><i class="fa-solid fa-warehouse text-indigo-500"></i> 原材料实时库存结余</h3>
-                    <div id="material-balance-cards" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3"></div>
-                </div>
-
-                <form id="inventory-batch-form" onsubmit="handleBatchInventorySubmit(event)" class="border-t border-slate-100 pt-4">
-                    <h2 class="text-sm sm:text-md font-bold text-slate-800 mb-3">批量录入出入库记录</h2>
-                    <div id="batch-rows-container" class="space-y-3 mb-4"></div>
-                    <div class="flex justify-between items-center flex-wrap gap-2">
-                        <button type="button" onclick="addInventoryRow()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs sm:text-sm px-3.5 py-2.5 rounded-lg border border-slate-300 font-medium mobile-touch-target"><i class="fa-solid fa-plus"></i> 增加一行</button>
-                        <button type="submit" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm px-4 py-2.5 rounded-lg font-medium shadow-sm mobile-touch-target"><i class="fa-solid fa-cloud-arrow-up"></i> 提交云端保存</button>
-                    </div>
-                </form>
-
-                <div class="border border-slate-200 rounded-lg overflow-hidden">
-                    <div onclick="toggleSectionCollapse('inventory-table-wrap', 'inv-toggle-icon')" class="bg-slate-50 p-3.5 flex justify-between items-center cursor-pointer hover:bg-slate-100 transition">
-                        <span class="text-xs sm:text-sm font-bold text-slate-700 flex items-center gap-2">
-                            <i class="fa-solid fa-list-check text-indigo-500"></i> 原材料出入库历史记录列表
-                        </span>
-                        <span class="text-xs text-slate-500 flex items-center gap-1 font-medium">
-                            <span id="inv-count-badge">0条</span> <i id="inv-toggle-icon" class="fa-solid fa-chevron-down transition-transform duration-200"></i>
-                        </span>
-                    </div>
-                    <div id="inventory-table-wrap" class="overflow-x-auto custom-scroll pt-2">
-                        <table class="w-full text-xs sm:text-sm text-left text-slate-600 min-w-[750px]">
-                            <thead class="bg-slate-50 text-slate-700 border-b border-slate-200">
-                                <tr>
-                                    <th class="p-2.5 sm:p-3">日期</th><th class="p-2.5 sm:p-3">材料名称</th><th class="p-2.5 sm:p-3">供应商名称</th><th class="p-2.5 sm:p-3">类型</th><th class="p-2.5 sm:p-3">数量</th><th class="p-2.5 sm:p-3">单位</th><th class="p-2.5 sm:p-3">单价</th><th class="p-2.5 sm:p-3">总金额</th><th class="p-2.5 sm:p-3">批注说明</th><th class="p-2.5 sm:p-3 text-right">操作</th>
-                                </tr>
-                            </thead>
-                            <tbody id="inventory-table-body"></tbody>
-                        </table>
-                    </div>
-                </div>
-            </section>
-
-            <!-- 4. 报表模块 -->
-            <section id="sec-report" class="bg-white p-3.5 sm:p-6 rounded-b-xl shadow-sm border border-t-0 border-slate-200 hidden space-y-6 sm:space-y-8">
-                <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center border-b border-slate-100 pb-4 gap-3">
-                    <div>
-                        <h2 class="text-base sm:text-lg font-bold text-slate-800">月度经营与客户发货分析报告</h2>
-                        <p class="text-xs text-slate-500 mt-0.5">多维度核算每月客户订单营收、总成本、毛利与环比增长分析 ($)</p>
-                    </div>
                     <div class="flex items-center gap-2">
-                        <select id="report-month-select" onchange="renderDeepReport()" class="border border-slate-300 rounded-lg text-xs p-2.5 bg-slate-50 font-medium mobile-touch-target"></select>
-                        <button onclick="exportReportToCSV()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs px-3.5 py-2.5 rounded-lg font-medium transition flex items-center justify-center gap-1.5 shadow-sm mobile-touch-target">
-                            <i class="fa-solid fa-file-excel"></i> 导出月度 Excel 报表
+                        <button onclick="toggleAllSections('orders')" class="bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 px-3 py-2 rounded-xl text-xs font-medium transition mobile-touch-target">
+                            <i class="fa-solid fa-up-down"></i> 展开/折叠全部
+                        </button>
+                        <button onclick="openOrderModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3.5 py-2 rounded-xl text-xs sm:text-sm font-medium shadow-md transition flex items-center gap-1.5 mobile-touch-target cursor-pointer">
+                            <i class="fa-solid fa-plus"></i> 新建客户订单
                         </button>
                     </div>
                 </div>
 
-                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-                    <div class="bg-slate-50 border border-slate-200 p-3.5 rounded-xl cursor-pointer hover:bg-slate-100 transition" onclick="openReportDetailModal('qty')">
-                        <div class="text-[11px] text-slate-400 flex justify-between items-center"><span>本月订单总数</span><i class="fa-solid fa-circle-info text-indigo-500"></i></div>
-                        <div class="text-sm sm:text-lg font-bold text-slate-800 mt-1" id="rep-kpi-count">0 笔</div>
-                    </div>
-                    <div class="bg-slate-50 border border-slate-200 p-3.5 rounded-xl cursor-pointer hover:bg-slate-100 transition" onclick="openReportDetailModal('amount')">
-                        <div class="text-[11px] text-slate-400 flex justify-between items-center"><span>本月总营收额 ($)</span><i class="fa-solid fa-circle-info text-indigo-500"></i></div>
-                        <div class="text-sm sm:text-lg font-bold text-emerald-600 mt-1 truncate" id="rep-kpi-amount">$0.00</div>
-                    </div>
-                    <div class="bg-slate-50 border border-slate-200 p-3.5 rounded-xl cursor-pointer hover:bg-slate-100 transition" onclick="openReportDetailModal('cost')">
-                        <div class="text-[11px] text-slate-400 flex justify-between items-center"><span>本月总成本 ($)</span><i class="fa-solid fa-circle-info text-indigo-500"></i></div>
-                        <div class="text-sm sm:text-lg font-bold text-rose-600 mt-1 truncate" id="rep-kpi-material-exp">$0.00</div>
-                    </div>
-                    <div class="bg-slate-50 border border-slate-200 p-3.5 rounded-xl cursor-pointer hover:bg-slate-100 transition" onclick="openReportDetailModal('profit')">
-                        <div class="text-[11px] text-slate-400 flex justify-between items-center"><span>本月总毛利润 ($)</span><i class="fa-solid fa-circle-info text-indigo-500"></i></div>
-                        <div class="text-sm sm:text-lg font-bold text-purple-600 mt-1 truncate" id="rep-kpi-profit">$0.00</div>
-                    </div>
-                    <div class="bg-slate-50 border border-slate-200 p-3.5 rounded-xl cursor-pointer hover:bg-slate-100 transition" onclick="openReportDetailModal('total_qty')">
-                        <div class="text-[11px] text-slate-400 flex justify-between items-center"><span>本月订单总量</span><i class="fa-solid fa-circle-info text-indigo-500"></i></div>
-                        <div class="text-sm sm:text-lg font-bold text-indigo-600 mt-1" id="rep-kpi-qty">0 件</div>
-                    </div>
-                    <div class="bg-slate-50 border border-slate-200 p-3.5 rounded-xl cursor-pointer hover:bg-slate-100 transition" onclick="openReportDetailModal('shipped')">
-                        <div class="text-[11px] text-slate-400 flex justify-between items-center"><span>本月订单出库数</span><i class="fa-solid fa-circle-info text-indigo-500"></i></div>
-                        <div class="text-sm sm:text-lg font-bold text-blue-600 mt-1" id="rep-kpi-shipped">0 件</div>
-                    </div>
+                <div id="orders-grouped-container" class="space-y-4">
+                    <!-- 动态渲染订单按客户分组 -->
+                </div>
+            </section>
+
+            <!-- 模块 2: 订单发货与独立出库单 -->
+            <section id="sec-order-shipping" class="hidden space-y-4">
+                <div class="flex justify-between items-center">
+                    <h2 class="text-base sm:text-lg font-bold text-slate-800 flex items-center gap-2">
+                        <i class="fa-solid fa-truck-ramp-box text-indigo-600"></i> 订单发货与独立出库单看板
+                    </h2>
+                    <span id="shipping-count-badge" class="bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full text-xs font-bold">0 笔</span>
                 </div>
 
-                <div class="bg-indigo-50/70 border border-indigo-100 p-4 rounded-xl text-xs space-y-2 text-indigo-950 shadow-xs">
-                    <div class="font-bold text-xs sm:text-sm text-indigo-900 flex items-center gap-1.5 border-b border-indigo-200 pb-2">
-                        <i class="fa-solid fa-chart-line text-indigo-600"></i> <span id="report-month-title-label">本月</span> 经营分析与环比(MoM)对照
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                    <div class="pc-table-view overflow-x-auto custom-scroll">
+                        <table class="w-full text-left text-xs sm:text-sm text-slate-600 min-w-[1000px]">
+                            <tr class="bg-slate-50 border-b border-slate-200 text-slate-500 font-bold">
+                                <th class="p-3">订单号</th>
+                                <th class="p-3">客户名称</th>
+                                <th class="p-3">产品款式型号明细</th>
+                                <th class="p-3">预计发货时间</th>
+                                <th class="p-3">订单总数</th>
+                                <th class="p-3">已发货总数</th>
+                                <th class="p-3">已发货金额 ($)</th>
+                                <th class="p-3">未发货款式与数量</th>
+                                <th class="p-3">独立出库单历史</th>
+                                <th class="p-3 text-right">操作</th>
+                            </tr>
+                            <tbody id="order-shipping-table-body">
+                                <!-- 动态渲染订单发货表格 -->
+                            </tbody>
+                        </table>
                     </div>
-                    <div id="smart-report-text" class="leading-relaxed space-y-1">生成中...</div>
-                </div>
 
-                <div>
-                    <div class="flex justify-between items-center mb-3 sm:mb-4">
-                        <h3 class="text-xs sm:text-sm font-bold text-slate-700 flex items-center gap-2"><i class="fa-solid fa-user-group text-indigo-500"></i> 本月各客户订单分析与毛利统计</h3>
-                        <button onclick="toggleSectionCollapse('customer-cards-container', 'cust-toggle-icon')" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-600 px-2.5 py-1.5 rounded-lg font-medium transition flex items-center gap-1 mobile-touch-target">
-                            <span>折叠/展开客户看板</span> <i id="cust-toggle-icon" class="fa-solid fa-chevron-down transition-transform duration-200"></i>
+                    <div class="mobile-card-view p-3 space-y-3" id="order-shipping-card-body">
+                        <!-- 移动端发货卡片 -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- 模块 3: 原材料出入库与库存 -->
+            <section id="sec-inventory" class="hidden space-y-6">
+                <!-- 快捷出入库录入卡片 -->
+                <div class="bg-white p-4 sm:p-6 rounded-2xl shadow-sm border border-slate-200 space-y-4">
+                    <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+                        <h3 class="text-base font-bold text-slate-800 flex items-center gap-2">
+                            <i class="fa-solid fa-boxes-stacked text-indigo-600"></i> 原材料批量出入库录入 (自动核算单价与库存)
+                        </h3>
+                        <button type="button" onclick="addInventoryRow()" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-600 px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1 transition">
+                            <i class="fa-solid fa-plus"></i> 增加明细行
                         </button>
                     </div>
-                    <div id="customer-cards-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4"></div>
+
+                    <form onsubmit="handleBatchInventorySubmit(event)" class="space-y-3">
+                        <div id="batch-rows-container" class="space-y-2.5">
+                            <!-- 动态增加原材料行 -->
+                        </div>
+                        <div class="flex justify-end pt-2">
+                            <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm font-medium px-5 py-2.5 rounded-xl shadow-md transition mobile-touch-target">
+                                确认提交保存录入
+                            </button>
+                        </div>
+                    </form>
                 </div>
 
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-                    <div class="border border-slate-200 p-3.5 sm:p-4 rounded-xl bg-slate-50/50">
-                        <h4 class="text-xs font-bold text-slate-700 mb-2.5">本月各客户订单总数 vs 已出库数</h4>
-                        <div class="h-56 sm:h-64"><canvas id="chart-orders-qty"></canvas></div>
+                <!-- 各原材料实时结余卡片 -->
+                <div class="space-y-3">
+                    <h3 class="text-sm font-bold text-slate-800 flex items-center gap-2">
+                        <i class="fa-solid fa-warehouse text-indigo-600"></i> 原材料实时库存结余统计
+                    </h3>
+                    <div id="material-balance-cards" class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-3">
+                        <!-- 动态渲染材料结余 -->
                     </div>
-                    <div class="border border-slate-200 p-4 rounded-xl bg-slate-50/50">
-                        <h4 class="text-xs font-bold text-slate-700 mb-2.5">本月各客户消费总金额 ($) 对比</h4>
-                        <div class="h-56 sm:h-64"><canvas id="chart-orders-amount"></canvas></div>
+                </div>
+
+                <!-- 历史流水记录列表 -->
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden space-y-3">
+                    <div class="p-4 border-b border-slate-100 flex justify-between items-center">
+                        <h3 class="text-sm font-bold text-slate-800">原材料出入库历史流水明细</h3>
+                        <span id="inv-count-badge" class="bg-slate-100 text-slate-600 px-2.5 py-1 rounded-md text-xs font-mono">0条</span>
+                    </div>
+                    <div class="overflow-x-auto custom-scroll">
+                        <table class="w-full text-left text-xs sm:text-sm text-slate-600 min-w-[800px]">
+                            <tr class="bg-slate-50 border-b border-slate-200 text-slate-500 font-bold">
+                                <th class="p-3">变动日期</th>
+                                <th class="p-3">材料名称</th>
+                                <th class="p-3">供应商</th>
+                                <th class="p-3">类型</th>
+                                <th class="p-3">变动数量</th>
+                                <th class="p-3">单位</th>
+                                <th class="p-3">单价 ($)</th>
+                                <th class="p-3">总金额 ($)</th>
+                                <th class="p-3">批注说明</th>
+                                <th class="p-3 text-right">操作</th>
+                            </tr>
+                            <tbody id="inventory-table-body">
+                                <!-- 动态渲染历史流水 -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 模块 4: 月度分析与报表 -->
+            <section id="sec-report" class="hidden space-y-6">
+                <!-- 头部控制与月份选择 -->
+                <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                    <div class="flex items-center gap-3">
+                        <div class="bg-indigo-100 text-indigo-700 p-2.5 rounded-xl font-bold">
+                            <i class="fa-solid fa-chart-line text-lg"></i>
+                        </div>
+                        <div>
+                            <h2 class="text-base sm:text-lg font-bold text-slate-900">经营月度与环比 (MoM) 深度分析</h2>
+                            <p class="text-xs text-slate-500">查看多型号拆解、成本利润及与上月对比</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2 w-full sm:w-auto">
+                        <select id="report-month-select" onchange="renderDeepReport()" class="bg-slate-50 border border-slate-300 text-xs sm:text-sm font-medium rounded-xl p-2.5 outline-none flex-1 sm:flex-none">
+                            <!-- 动态加载月份 -->
+                        </select>
+                        <button onclick="exportReportToCSV()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs px-4 py-2.5 rounded-xl font-medium shadow-sm transition flex items-center gap-1.5 shrink-0">
+                            <i class="fa-solid fa-file-csv"></i> 导出 CSV
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 选定月份 KPI Summary (点击弹出详情) -->
+                <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+                    <div onclick="openReportDetailModal('qty')" class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-1 cursor-pointer hover:bg-slate-50 transition">
+                        <div class="text-xs text-slate-400 font-medium">本月订单笔数</div>
+                        <div id="rep-kpi-count" class="text-lg font-bold text-indigo-600">0 笔</div>
+                    </div>
+                    <div onclick="openReportDetailModal('total_qty')" class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-1 cursor-pointer hover:bg-slate-50 transition">
+                        <div class="text-xs text-slate-400 font-medium">本月订单总量</div>
+                        <div id="rep-kpi-qty" class="text-lg font-bold text-slate-800">0 件</div>
+                    </div>
+                    <div onclick="openReportDetailModal('shipped')" class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-1 cursor-pointer hover:bg-slate-50 transition">
+                        <div class="text-xs text-slate-400 font-medium">本月实际出库数</div>
+                        <div id="rep-kpi-shipped" class="text-lg font-bold text-blue-600">0 件</div>
+                    </div>
+                    <div onclick="openReportDetailModal('amount')" class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-1 cursor-pointer hover:bg-slate-50 transition">
+                        <div class="text-xs text-slate-400 font-medium">本月订单总营收 ($)</div>
+                        <div id="rep-kpi-amount" class="text-lg font-bold text-emerald-600">$0.00</div>
+                    </div>
+                    <div onclick="openReportDetailModal('cost')" class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-1 cursor-pointer hover:bg-slate-50 transition">
+                        <div class="text-xs text-slate-400 font-medium">本月订单总成本 ($)</div>
+                        <div id="rep-kpi-material-exp" class="text-lg font-bold text-rose-600">$0.00</div>
+                    </div>
+                    <div onclick="openReportDetailModal('profit')" class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-1 cursor-pointer hover:bg-slate-50 transition">
+                        <div class="text-xs text-slate-400 font-medium">本月总毛利润 ($)</div>
+                        <div id="rep-kpi-profit" class="text-lg font-bold text-purple-600">$0.00</div>
+                    </div>
+                </div>
+
+                <!-- 智能 MoM 环比文本分析卡片 -->
+                <div class="bg-indigo-50/70 border border-indigo-100 p-4 rounded-2xl space-y-2">
+                    <h3 class="text-xs font-bold text-indigo-900 uppercase tracking-wider flex items-center gap-1.5">
+                        <i class="fa-solid fa-robot"></i> 月度经营智能摘要 & 环比 (MoM) 动态解读
+                    </h3>
+                    <div id="smart-report-text" class="text-xs text-indigo-950 leading-relaxed font-medium">
+                        <!-- 动态生成摘要 -->
+                    </div>
+                </div>
+
+                <!-- 图表区域 -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="bg-white p-4 sm:p-5 rounded-2xl shadow-sm border border-slate-200 space-y-3">
+                        <h3 class="text-xs sm:text-sm font-bold text-slate-800">各客户本月订单总量与出库对比</h3>
+                        <div class="h-64"><canvas id="chart-orders-qty"></canvas></div>
+                    </div>
+                    <div class="bg-white p-4 sm:p-5 rounded-2xl shadow-sm border border-slate-200 space-y-3">
+                        <h3 class="text-xs sm:text-sm font-bold text-slate-800">各客户本月消费金额分布 ($)</h3>
+                        <div class="h-64"><canvas id="chart-orders-amount"></canvas></div>
+                    </div>
+                </div>
+
+                <!-- 按客户拆解明细卡片组 -->
+                <div class="space-y-3">
+                    <h3 class="text-sm font-bold text-slate-800 flex items-center gap-2">
+                        <i class="fa-solid fa-users text-indigo-600"></i> [<span id="report-month-title-label"></span>] 客户消费与毛利贡献排行榜
+                    </h3>
+                    <div id="customer-cards-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <!-- 动态生成客户分析卡片 -->
                     </div>
                 </div>
             </section>
         </main>
     </div>
 
-    <!-- 弹窗：报表/看板 KPI 点击查看详情弹窗 -->
-    <div id="modal-report-detail" class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm hidden flex items-center justify-center z-[220] p-3 sm:p-6">
-        <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] flex flex-col overflow-hidden border border-slate-200">
+    <!-- 弹窗：报表/看板数据弹窗详情 -->
+    <div id="modal-report-detail" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center z-[120] p-3 sm:p-6">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[85vh] flex flex-col overflow-hidden border border-slate-200">
             <div class="bg-indigo-900 text-white px-5 py-4 flex justify-between items-center shrink-0">
-                <h3 class="text-base font-bold flex items-center gap-2"><i class="fa-solid fa-list-check text-indigo-300"></i> <span id="report-detail-modal-title">指标明细详情</span></h3>
+                <h3 id="report-detail-modal-title" class="text-base font-bold flex items-center gap-2">
+                    <i class="fa-solid fa-list-check text-indigo-300"></i> 报表数据明细
+                </h3>
                 <button onclick="closeReportDetailModal()" class="bg-indigo-800 hover:bg-indigo-700 text-indigo-100 px-3 py-1.5 rounded-lg text-xs font-medium transition cursor-pointer">
                     <i class="fa-solid fa-xmark"></i> 关闭
                 </button>
@@ -445,10 +475,10 @@
         </div>
     </div>
 
-    <!-- 弹窗：标准 A4 尺寸出库单/送货单预览 -->
+    <!-- 弹窗：标准 A4 尺寸出库单预览 -->
     <div id="modal-delivery-note" class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm hidden flex items-center justify-center z-[250] p-2 sm:p-4">
         <div class="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[95vh] flex flex-col overflow-hidden border border-slate-300">
-            <!-- 头部控制栏 (打印时自动隐藏) -->
+            <!-- 头部控制栏 -->
             <div class="bg-slate-900 text-white px-5 py-3 flex justify-between items-center shrink-0 no-print">
                 <h3 class="text-sm sm:text-base font-bold flex items-center gap-2"><i class="fa-solid fa-print text-indigo-400"></i> 标准 A4 尺寸出库单预览</h3>
                 <div class="flex items-center gap-2">
@@ -461,7 +491,7 @@
                 </div>
             </div>
             
-            <!-- 出库单据主体 (标准 A4 幅面，严格按照订单格式明细做表头，美金单位) -->
+            <!-- 出库单据主体 -->
             <div id="delivery-note-content" class="p-8 overflow-y-auto custom-scroll space-y-4 bg-white text-slate-900 font-sans text-xs">
                 <!-- 动态渲染出库单内容 -->
             </div>
@@ -593,8 +623,8 @@
     <!-- 逻辑处理脚本 -->
     <script>
         const RAW_SUPABASE_URL = "https://bmihjttxiqlzypdvxrdo.supabase.co";
-        // 使用 __CLOUDFLARE_INJECTED_SUPABASE_KEY__ 作为 Cloudflare 构建时自动替换的占位符
-        const RAW_SUPABASE_KEY = "__CLOUDFLARE_INJECTED_SUPABASE_KEY__"; 
+        // 统一使用 __SUPABASE_KEY_PLACEHOLDER__ 作为占位符，由 Cloudflare 构建时使用环境变量 SUPABASE_ANON_KEY 自动替换
+        const RAW_SUPABASE_KEY = "__SUPABASE_KEY_PLACEHOLDER__"; 
 
         function sanitizeHeaderString(str) {
             if (!str) return '';
@@ -1171,10 +1201,6 @@
             detailModal.classList.remove('hidden');
         }
 
-        function closeSearchDetailModal() {
-            document.getElementById('modal-global-search-detail').classList.add('hidden');
-        }
-
         function openReportDetailModal(type) {
             const select = document.getElementById('report-month-select');
             const selectedMonth = select ? select.value : new Date().toISOString().slice(0, 7);
@@ -1379,7 +1405,6 @@
             document.getElementById('modal-report-detail').classList.add('hidden');
         }
 
-        // 标准 A4 纸出库单预览渲染 (无杂项信息，严格按照订单格式明细表头，美金单位)
         function openDeliveryNoteModal(orderId, batchIndex) {
             const o = ordersData.find(item => item.id === orderId);
             if (!o) return;
@@ -1439,13 +1464,11 @@
             const contentDiv = document.getElementById('delivery-note-content');
             contentDiv.innerHTML = `
                 <div class="space-y-6">
-                    <!-- 公司抬头与单据标题 -->
                     <div class="text-center space-y-2 border-b-2 border-slate-900 pb-4">
                         <h1 class="text-2xl font-black text-slate-900 tracking-wider">建德友联电器有限公司</h1>
                         <div class="text-sm font-bold text-slate-700 tracking-widest uppercase">Delivery Note (出库送货单)</div>
                     </div>
 
-                    <!-- 订单基本信息表头 (严格对齐订单格式) -->
                     <div class="grid grid-cols-2 gap-4 text-xs sm:text-sm bg-slate-50 p-4 rounded-xl border border-slate-200 font-medium">
                         <div>
                             <span class="text-slate-500">客户名称 (Customer):</span> <strong class="text-slate-900">${o.customer}</strong>
@@ -1461,7 +1484,6 @@
                         </div>
                     </div>
 
-                    <!-- 订单明细表格 (严格按照订单格式做表头) -->
                     <table class="w-full border-collapse border border-slate-300 text-xs sm:text-sm">
                         <thead>
                             <tr class="bg-slate-100 text-slate-900 font-bold border-b-2 border-slate-400">
@@ -1486,7 +1508,6 @@
                         </tfoot>
                     </table>
 
-                    <!-- 签字盖章栏 -->
                     <div class="grid grid-cols-3 gap-6 pt-12 text-xs font-medium text-slate-800">
                         <div class="border-t border-slate-400 pt-2 text-center">
                             制单人 (Prepared by): ___________
@@ -2004,7 +2025,7 @@
             if (!row) return;
             const matName = row.querySelector('.inv-material-input').value.trim().toLowerCase();
             const supName = row.querySelector('.inv-supplier-input').value.trim().toLowerCase();
-            const typeSelect = row.querySelector('select'); // 类型选择框 (IN / OUT)
+            const typeSelect = row.querySelector('select');
             
             if (typeSelect && typeSelect.value === 'OUT') {
                 if (!matName || !supName) return;
@@ -2623,4 +2644,4 @@
         }
     </script>
 </body>
-</html> 
+</html>
