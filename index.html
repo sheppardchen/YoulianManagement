@@ -664,7 +664,8 @@
     <script>
         const RAW_SUPABASE_URL = "https://bmihjttxiqlzypdvxrdo.supabase.co";
         // 请勿修改此处的占位符，Cloudflare 环境变量注入机制依赖于它
-        const RAW_SUPABASE_KEY = "__SUPABASE_KEY_PLACEHOLDER__"; 
+        // 在代码头部定义全局变量
+window.SUPABASE_ANON_KEY = "__SUPABASE_KEY_PLACEHOLDER__"; 
 
         function sanitizeHeaderString(str) {
             if (!str) return '';
