@@ -1016,12 +1016,36 @@
                 }).join('');
             }
 
-            searchInput.value = '';
+            // 保留搜索关键词，关闭结果页返回主界面后仍可继续修改或重复搜索
             document.getElementById('modal-global-search-result').classList.remove('hidden');
         }
 
+        // 关闭搜索详情：只关闭最上层详情弹窗，保留下面的搜索结果页
+        function closeSearchDetailModal() {
+            const detailModal = document.getElementById('modal-global-search-detail');
+            if (detailModal) detailModal.classList.add('hidden');
+        }
+
+        // 返回主界面：同时关闭详情层和搜索结果层，避免残留遮罩挡住页面
         function closeGlobalSearchModal() {
-            document.getElementById('modal-global-search-result').classList.add('hidden');
+            closeSearchDetailModal();
+            const resultModal = document.getElementById('modal-global-search-result');
+            if (resultModal) resultModal.classList.add('hidden');
+        }
+
+        // 键盘 Esc：优先关闭详情，再关闭搜索结果；不会误关底层页面
+        if (!window.__globalSearchEscapeBound) {
+            window.__globalSearchEscapeBound = true;
+            document.addEventListener('keydown', function(event) {
+                if (event.key !== 'Escape') return;
+                const detailModal = document.getElementById('modal-global-search-detail');
+                const resultModal = document.getElementById('modal-global-search-result');
+                if (detailModal && !detailModal.classList.contains('hidden')) {
+                    closeSearchDetailModal();
+                } else if (resultModal && !resultModal.classList.contains('hidden')) {
+                    closeGlobalSearchModal();
+                }
+            });
         }
 
         function openSearchItemDetail(type, id) {
