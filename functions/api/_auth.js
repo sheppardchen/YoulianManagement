@@ -153,7 +153,7 @@ async function derivePasswordHash(password, saltBytes) {
     {
       name: "PBKDF2",
       salt: saltBytes,
-      iterations: 310000,
+      iterations: 100000,
       hash: "SHA-256"
     },
     key,
@@ -191,7 +191,7 @@ export async function makePasswordRecord(password) {
 
   return JSON.stringify({
     algorithm: "PBKDF2-SHA256",
-    iterations: 310000,
+    iterations: 100000,
     salt: Array.from(salt, b =>
       b.toString(16).padStart(2, "0")
     ).join(""),
@@ -208,7 +208,7 @@ export async function verifyPassword(password, recordText) {
 
     if (
       record.algorithm !== "PBKDF2-SHA256" ||
-      record.iterations !== 310000
+      record.iterations !== 100000
     ) {
       return false;
     }
