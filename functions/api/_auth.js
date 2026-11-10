@@ -20,9 +20,15 @@ export function requireSameOrigin(request) {
   const fetchSite = request.headers.get("Sec-Fetch-Site");
 
   if (origin !== url.origin) return false;
-  if (fetchSite && fetchSite !== "same-origin" && fetchSite !== "none") {
+
+  if (
+    fetchSite &&
+    fetchSite !== "same-origin" &&
+    fetchSite !== "none"
+  ) {
     return false;
   }
+
   return true;
 }
 
@@ -32,10 +38,17 @@ function cookieValue(request, name) {
 
   for (const part of cookie.split(";")) {
     const index = part.indexOf("=");
+
     if (index < 0) continue;
 
     if (part.slice(0, index).trim() === name) {
-      return decodeURIComponent(part.slice(index + 1).trim());
+      try {
+        return decodeURIComponent(
+          part.slice(index + 1).trim()
+        );
+      } catch {
+        return null;
+      }
     }
   }
 
@@ -76,7 +89,17 @@ export async function getSession(request, env) {
       return null;
     }
 
+    // 检查会话版本，密码修改后使旧会话失效
+    const currentVersion =
+      await env.ERP_AUTH.get("admin:session_version") || "1";
+
+    if (session.sessionVersion !== currentVersion) {
+      await env.ERP_AUTH.delete(`session:${token}`);
+      return null;
+    }
+
     return { token, ...session };
+
   } catch {
     await env.ERP_AUTH.delete(`session:${token}`);
     return null;
@@ -97,11 +120,16 @@ export async function createSession(env, remember) {
 
   const expiresAt = Date.now() + maxAge * 1000;
 
+  // 获取当前会话版本
+  const sessionVersion =
+    await env.ERP_AUTH.get("admin:session_version") || "1";
+
   await env.ERP_AUTH.put(
     `session:${token}`,
     JSON.stringify({
       createdAt: Date.now(),
-      expiresAt
+      expiresAt,
+      sessionVersion
     }),
     { expirationTtl: maxAge }
   );
@@ -146,7 +174,10 @@ function fromHex(hex) {
   const bytes = new Uint8Array(hex.length / 2);
 
   for (let i = 0; i < bytes.length; i++) {
-    bytes[i] = parseInt(hex.slice(i * 2, i * 2 + 2), 16);
+    bytes[i] = parseInt(
+      hex.slice(i * 2, i * 2 + 2),
+      16
+    );
   }
 
   return bytes;
@@ -155,6 +186,7 @@ function fromHex(hex) {
 // 创建密码记录，只保存哈希，不保存明文
 export async function makePasswordRecord(password) {
   const salt = crypto.getRandomValues(new Uint8Array(16));
+
   const hash = await derivePasswordHash(password, salt);
 
   return JSON.stringify({
@@ -186,15 +218,23 @@ export async function verifyPassword(password, recordText) {
       fromHex(record.salt)
     );
 
-    if (actual.length !== record.hash.length) return false;
+    if (
+      typeof record.hash !== "string" ||
+      actual.length !== record.hash.length
+    ) {
+      return false;
+    }
 
     let diff = 0;
 
     for (let i = 0; i < actual.length; i++) {
-      diff |= actual.charCodeAt(i) ^ record.hash.charCodeAt(i);
+      diff |=
+        actual.charCodeAt(i) ^
+        record.hash.charCodeAt(i);
     }
 
     return diff === 0;
+
   } catch {
     return false;
   }
@@ -211,19 +251,28 @@ export async function getOrCreatePasswordRecord(env) {
   if (record) return record;
 
   if (!env.ADMIN_INITIAL_PASSWORD) {
-    throw new Error("Cloudflare secret ADMIN_INITIAL_PASSWORD is missing.");
+    throw new Error(
+      "Cloudflare secret ADMIN_INITIAL_PASSWORD is missing."
+    );
   }
 
-  record = await makePasswordRecord(env.ADMIN_INITIAL_PASSWORD);
+  record = await makePasswordRecord(
+    env.ADMIN_INITIAL_PASSWORD
+  );
 
-  await env.ERP_AUTH.put("admin:password_hash", record);
+  await env.ERP_AUTH.put(
+    "admin:password_hash",
+    record
+  );
 
   return record;
 }
 
 // 安全读取 JSON 请求
 export async function readJson(request, maxBytes = 8192) {
-  const declared = Number(request.headers.get("Content-Length") || 0);
+  const declared = Number(
+    request.headers.get("Content-Length") || 0
+  );
 
   if (declared > maxBytes) {
     throw new Error("Request body too large.");
@@ -231,7 +280,9 @@ export async function readJson(request, maxBytes = 8192) {
 
   const text = await request.text();
 
-  if (new TextEncoder().encode(text).length > maxBytes) {
+  if (
+    new TextEncoder().encode(text).length > maxBytes
+  ) {
     throw new Error("Request body too large.");
   }
 
