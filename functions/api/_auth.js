@@ -248,7 +248,21 @@ export async function getOrCreatePasswordRecord(env) {
 
   let record = await env.ERP_AUTH.get("admin:password_hash");
 
-  if (record) return record;
+  // 只保留当前 Cloudflare 支持的密码记录格式
+  if (record) {
+    try {
+      const parsed = JSON.parse(record);
+
+      if (
+        parsed.algorithm === "PBKDF2-SHA256" &&
+        parsed.iterations === 100000
+      ) {
+        return record;
+      }
+    } catch {
+      // 旧记录格式不兼容，重新初始化
+    }
+  }
 
   if (!env.ADMIN_INITIAL_PASSWORD) {
     throw new Error(
@@ -256,6 +270,8 @@ export async function getOrCreatePasswordRecord(env) {
     );
   }
 
+  // 旧版 310000 次迭代的记录不兼容，
+  // 使用 Cloudflare 中设置的初始密码重新生成
   record = await makePasswordRecord(
     env.ADMIN_INITIAL_PASSWORD
   );
