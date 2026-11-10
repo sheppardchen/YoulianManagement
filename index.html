@@ -107,7 +107,11 @@
                 <!-- 全局搜索框 -->
                 <div class="flex-1 max-w-md mx-4">
                     <div class="relative">
-                        <input type="text" id="global-search-input" onkeydown="handleGlobalSearchKeyDown(event)" placeholder="搜索客户/订单号/款式型号/材料..." class="w-full bg-slate-800 text-white placeholder-slate-400 text-xs sm:text-sm pl-9 pr-16 py-2 rounded-xl border border-slate-700 outline-none focus:ring-2 focus:ring-indigo-500">
+                        <input type="text" id="global-search-input" onkeydown="handleGlobalSearchKeyDown(event)" onfocus="showSearchHistory()" oninput="filterSearchHistory()" placeholder="搜索客户/订单号/款式型号/材料..." autocomplete="off" class="w-full bg-slate-800 text-white placeholder-slate-400 text-xs sm:text-sm pl-9 pr-16 py-2 rounded-xl border border-slate-700 outline-none focus:ring-2 focus:ring-indigo-500">
+                        <div id="global-search-history" class="hidden absolute left-0 right-0 top-full mt-2 bg-white border border-slate-200 rounded-xl shadow-xl overflow-hidden z-[100] text-slate-700">
+                            <div class="px-3 py-2 text-[11px] font-bold text-slate-400 border-b border-slate-100">最近搜索（最多5条）</div>
+                            <div id="global-search-history-list" class="max-h-60 overflow-y-auto"></div>
+                        </div>
                         <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
                         <button type="button" onclick="executeGlobalSearch()" class="absolute right-1.5 top-1/2 -translate-y-1/2 bg-indigo-600 hover:bg-indigo-700 text-white px-2.5 py-1 rounded-lg text-xs font-medium cursor-pointer">
                             搜索
@@ -201,13 +205,16 @@
 
             <!-- 模块 2: 订单发货与独立出库单 -->
             <section id="sec-order-shipping" class="hidden space-y-4">
-                <div class="flex justify-between items-center">
-                    <h2 class="text-base sm:text-lg font-bold text-slate-800 flex items-center gap-2">
-                        <i class="fa-solid fa-truck-ramp-box text-indigo-600"></i> 订单发货与独立出库单看板
-                    </h2>
-                    <span id="shipping-count-badge" class="bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full text-xs font-bold">0 笔</span>
+                <div onclick="toggleSectionCollapse('shipping-module-content', 'shipping-module-icon')" class="bg-white border border-slate-200 rounded-xl px-4 py-3 flex justify-between items-center cursor-pointer hover:bg-slate-50 transition">
+                    <div class="flex items-center gap-2">
+                        <h2 class="text-base sm:text-lg font-bold text-slate-800 flex items-center gap-2">
+                            <i class="fa-solid fa-truck-ramp-box text-indigo-600"></i> 订单发货与独立出库单看板
+                        </h2>
+                        <span id="shipping-count-badge" class="bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full text-xs font-bold">0 笔</span>
+                    </div>
+                    <i id="shipping-module-icon" class="fa-solid fa-chevron-down text-xs text-slate-500 transition-transform duration-200"></i>
                 </div>
-
+                <div id="shipping-module-content" class="space-y-4">
                 <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
                     <div class="pc-table-view overflow-x-auto custom-scroll">
                         <table class="w-full text-left text-xs sm:text-sm text-slate-600 min-w-[1000px]">
@@ -233,10 +240,16 @@
                         <!-- 移动端发货卡片 -->
                     </div>
                 </div>
+                </div>
             </section>
 
             <!-- 模块 3: 原材料出入库与库存 -->
-            <section id="sec-inventory" class="hidden space-y-6">
+            <section id="sec-inventory" class="hidden space-y-4">
+                <div onclick="toggleSectionCollapse('inventory-module-content', 'inventory-module-icon')" class="bg-white border border-slate-200 rounded-xl px-4 py-3 flex justify-between items-center cursor-pointer hover:bg-slate-50 transition">
+                    <h2 class="text-base sm:text-lg font-bold text-slate-800 flex items-center gap-2"><i class="fa-solid fa-boxes-stacked text-indigo-600"></i> 原材料出入库与库存</h2>
+                    <i id="inventory-module-icon" class="fa-solid fa-chevron-down text-xs text-slate-500 transition-transform duration-200"></i>
+                </div>
+                <div id="inventory-module-content" class="space-y-6">
                 <!-- 快捷出入库录入卡片 -->
                 <div class="bg-white p-4 sm:p-6 rounded-2xl shadow-sm border border-slate-200 space-y-4">
                     <div class="flex justify-between items-center border-b border-slate-100 pb-3">
@@ -295,6 +308,7 @@
                             </tbody>
                         </table>
                     </div>
+                </div>
                 </div>
             </section>
 
@@ -384,6 +398,11 @@
 
             <!-- 模块 5: 15天自动清理回收站 -->
             <section id="sec-recycle" class="hidden space-y-4">
+                <div onclick="toggleSectionCollapse('recycle-module-content', 'recycle-module-icon')" class="bg-white border border-slate-200 rounded-xl px-4 py-3 flex justify-between items-center cursor-pointer hover:bg-slate-50 transition">
+                    <h2 class="text-base sm:text-lg font-bold text-slate-800 flex items-center gap-2"><i class="fa-solid fa-recycle text-amber-600"></i> 数据安全回收站</h2>
+                    <i id="recycle-module-icon" class="fa-solid fa-chevron-down text-xs text-slate-500 transition-transform duration-200"></i>
+                </div>
+                <div id="recycle-module-content" class="space-y-4">
                 <div class="bg-amber-50 border border-amber-200 p-4 rounded-2xl flex justify-between items-center">
                     <div class="space-y-1">
                         <h2 class="text-sm font-bold text-amber-900 flex items-center gap-2">
@@ -411,6 +430,7 @@
                             </tbody>
                         </table>
                     </div>
+                </div>
                 </div>
             </section>
         </main>
@@ -884,10 +904,105 @@
             }
         }
 
+        // 最近5次搜索记录仅保存在当前浏览器，不写入 Supabase。
+        function getRecentSearchHistory() {
+            try {
+                const value = JSON.parse(localStorage.getItem('youlian_recent_searches') || '[]');
+                if (!Array.isArray(value)) return [];
+                // 历史记录按关键词去重（忽略大小写及首尾空格），保留最近一次出现的写法和顺序。
+                const seen = new Set();
+                const uniqueHistory = [];
+                value.forEach(item => {
+                    if (typeof item !== 'string') return;
+                    const keyword = item.trim();
+                    if (!keyword) return;
+                    const normalized = keyword.toLocaleLowerCase();
+                    if (seen.has(normalized)) return;
+                    seen.add(normalized);
+                    uniqueHistory.push(keyword);
+                });
+                const latestFive = uniqueHistory.slice(0, 5);
+                // 同时清理旧版本留下的重复记录，避免历史列表继续显示重复项。
+                if (JSON.stringify(value) !== JSON.stringify(latestFive)) {
+                    try { localStorage.setItem('youlian_recent_searches', JSON.stringify(latestFive)); } catch (e) {}
+                }
+                return latestFive;
+            } catch (e) { return []; }
+        }
+
+        function saveRecentSearchKeyword(keyword) {
+            const clean = String(keyword || '').trim();
+            if (!clean) return;
+            const history = getRecentSearchHistory().filter(item => item.toLowerCase() !== clean.toLowerCase());
+            history.unshift(clean);
+            try { localStorage.setItem('youlian_recent_searches', JSON.stringify(history.slice(0, 5))); } catch (e) {}
+        }
+
+        function renderSearchHistory(filterText = '') {
+            const panel = document.getElementById('global-search-history');
+            const list = document.getElementById('global-search-history-list');
+            if (!panel || !list) return;
+            const history = getRecentSearchHistory().filter(item => item.toLowerCase().includes(String(filterText).toLowerCase()));
+            list.innerHTML = '';
+            if (!history.length) {
+                const empty = document.createElement('div');
+                empty.className = 'px-3 py-3 text-xs text-slate-400';
+                empty.textContent = filterText ? '没有匹配的历史关键词' : '暂无搜索记录';
+                list.appendChild(empty);
+            } else {
+                history.forEach(keyword => {
+                    const button = document.createElement('button');
+                    button.type = 'button';
+                    button.className = 'w-full text-left px-3 py-2.5 text-xs hover:bg-indigo-50 flex items-center gap-2 border-b border-slate-50 last:border-0';
+                    const icon = document.createElement('i');
+                    icon.className = 'fa-solid fa-clock-rotate-left text-slate-400';
+                    const label = document.createElement('span');
+                    label.className = 'truncate';
+                    label.textContent = keyword;
+                    button.append(icon, label);
+                    button.addEventListener('mousedown', function(event) { event.preventDefault(); });
+                    button.addEventListener('click', function() { selectSearchHistoryKeyword(keyword); });
+                    list.appendChild(button);
+                });
+            }
+            panel.classList.remove('hidden');
+        }
+
+        function showSearchHistory() {
+            const input = document.getElementById('global-search-input');
+            renderSearchHistory(input ? input.value.trim() : '');
+        }
+
+        function filterSearchHistory() {
+            const input = document.getElementById('global-search-input');
+            renderSearchHistory(input ? input.value.trim() : '');
+        }
+
+        function hideSearchHistory() {
+            const panel = document.getElementById('global-search-history');
+            if (panel) panel.classList.add('hidden');
+        }
+
+        function selectSearchHistoryKeyword(keyword) {
+            const input = document.getElementById('global-search-input');
+            if (!input) return;
+            input.value = keyword;
+            hideSearchHistory();
+            executeGlobalSearch();
+        }
+
+        document.addEventListener('click', function(event) {
+            const input = document.getElementById('global-search-input');
+            const panel = document.getElementById('global-search-history');
+            if (input && panel && !input.parentElement.contains(event.target)) hideSearchHistory();
+        });
+
         function handleGlobalSearchKeyDown(e) {
             if (e.key === 'Enter') {
+                e.preventDefault();
                 executeGlobalSearch();
             }
+            if (e.key === 'Escape') hideSearchHistory();
         }
 
         function executeGlobalSearch() {
@@ -1016,8 +1131,11 @@
                 }).join('');
             }
 
-            // 保留搜索关键词，关闭结果页返回主界面后仍可继续修改或重复搜索
+            // 搜索完成后记录关键词并清空搜索框；下次点击搜索框可从最近5次记录中选择。
+            saveRecentSearchKeyword(searchInput.value.trim());
             document.getElementById('modal-global-search-result').classList.remove('hidden');
+            searchInput.value = '';
+            hideSearchHistory();
         }
 
         // 关闭搜索详情：只关闭最上层详情弹窗，保留下面的搜索结果页
