@@ -57,7 +57,7 @@ export async function onRequest({ request, env }) {
 
     // 4. 检查服务器端 Supabase 配置
     const supabaseUrl = env.SUPABASE_URL;
-    const supabaseKey = env.SUPABASE_SERVICE_ROLE_KEY;
+    const supabaseKey = env.SUPABASE_SECRET_KEY;
 
     if (!supabaseUrl || !supabaseKey) {
       return json({
@@ -102,7 +102,7 @@ export async function onRequest({ request, env }) {
     const headers = new Headers();
 
     headers.set("apikey", supabaseKey);
-    headers.set("Authorization", `Bearer ${supabaseKey}`);
+    
     headers.set("Accept", "application/json");
 
     const contentType = request.headers.get("Content-Type");
