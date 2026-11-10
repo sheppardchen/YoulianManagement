@@ -9,25 +9,21 @@ import {
 } from "../_auth.js";
 
 export async function onRequestPost({ request, env }) {
-  // 1. 检查请求来源
   if (!requireSameOrigin(request)) {
     return json({ error: "请求来源校验失败。" }, 403);
   }
 
   try {
-    // 2. 确认 KV 已配置
     if (!env.ERP_AUTH) {
       return json({ error: "尚未配置 ERP_AUTH KV。" }, 500);
     }
 
-    // 3. 检查管理员登录状态
     const session = await getSession(request, env);
 
     if (!session) {
       return json({ error: "登录已失效，请重新登录。" }, 401);
     }
 
-    // 4. 读取密码修改请求
     const body = await readJson(request);
 
     const oldPassword =
@@ -40,7 +36,13 @@ export async function onRequestPost({ request, env }) {
         ? body.newPassword
         : "";
 
-    // 5. 检查新密码
+    if (!oldPassword) {
+      return json({
+        success: false,
+        error: "请输入原密码。"
+      }, 400);
+    }
+
     if (newPassword.length < 8 || newPassword.length > 128) {
       return json({
         success: false,
@@ -55,7 +57,6 @@ export async function onRequestPost({ request, env }) {
       }, 400);
     }
 
-    // 6. 读取当前管理员密码哈希
     const passwordRecord = await env.ERP_AUTH.get(
       "admin:password_hash"
     );
@@ -67,7 +68,6 @@ export async function onRequestPost({ request, env }) {
       }, 500);
     }
 
-    // 7. 验证旧密码
     const valid = await verifyPassword(
       oldPassword,
       passwordRecord
@@ -80,19 +80,27 @@ export async function onRequestPost({ request, env }) {
       }, 401);
     }
 
-    // 8. 生成新密码哈希并保存到 KV
     const newPasswordRecord = await makePasswordRecord(
       newPassword
     );
 
+    // 更新会话版本，使旧会话失效
+    const newVersion = crypto.randomUUID();
+
+    await env.ERP_AUTH.put(
+      "admin:session_version",
+      newVersion
+    );
+
+    // 保存新密码哈希
     await env.ERP_AUTH.put(
       "admin:password_hash",
       newPasswordRecord
     );
 
-    // 9. 修改成功
     return json({
-      success: true
+      success: true,
+      message: "密码修改成功，请使用新密码重新登录。"
     });
 
   } catch (error) {
